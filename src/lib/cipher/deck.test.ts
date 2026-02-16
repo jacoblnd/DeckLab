@@ -98,18 +98,37 @@ describe('generateCipherMapping', () => {
     }
   });
 
-  it('every transformation includes position 0', () => {
-    for (const t of Object.values(mapping)) {
-      const positions = t.flat();
-      expect(positions).toContain(0);
+  it('every transformation includes position 0 by construction (not by rejection)', () => {
+    // Verify across many seeds that position 0 is always the first element
+    // of the first swap — this confirms it's built in, not rejection-sampled.
+    for (let seed = 0; seed < 50; seed++) {
+      const m = generateCipherMapping(seed);
+      for (const t of Object.values(m)) {
+        const positions = t.flat();
+        expect(positions).toContain(0);
+        // Position 0 should always be positions[0] (first element of first swap)
+        expect(t[0][0]).toBe(0);
+      }
     }
   });
 
-  it('no two PT symbols share the same transformation', () => {
-    const keys = Object.values(mapping).map((t) =>
-      t.map(([a, b]) => `${a},${b}`).join(';')
-    );
-    expect(new Set(keys).size).toBe(26);
+  it('no two PT symbols share the same transformation (normalized comparison)', () => {
+    // Normalize each transformation: sort within swaps, then sort swaps,
+    // so reorderings of the same set of swaps are detected as duplicates.
+    function normalizeKey(t: Transformation): string {
+      return t
+        .map(([a, b]) => (a < b ? [a, b] : [b, a]))
+        .sort((x, y) => x[0] - y[0] || x[1] - y[1])
+        .map(([a, b]) => `${a},${b}`)
+        .join(';');
+    }
+
+    // Check across multiple seeds
+    for (let seed = 0; seed < 20; seed++) {
+      const m = generateCipherMapping(seed);
+      const keys = Object.values(m).map(normalizeKey);
+      expect(new Set(keys).size).toBe(26);
+    }
   });
 
   it('same seed produces the same mapping', () => {
