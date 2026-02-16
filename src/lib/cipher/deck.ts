@@ -15,3 +15,19 @@ export function encipherStep(
     ciphertextChar: plaintextChar.toUpperCase(),
   };
 }
+
+export function encipher(plaintext: string): { deck: DeckState; ciphertext: string } {
+  let deck = createInitialDeck();
+  let ciphertext = '';
+
+  for (const char of plaintext) {
+    const upper = char.toUpperCase();
+    if (upper >= 'A' && upper <= 'Z') {
+      const result = encipherStep(deck, upper);
+      deck = result.newDeck;
+      ciphertext += result.ciphertextChar;
+    }
+  }
+
+  return { deck, ciphertext };
+}

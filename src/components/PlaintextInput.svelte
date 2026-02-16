@@ -1,12 +1,5 @@
 <script lang="ts">
-  let { oninput }: { oninput: (char: string) => void } = $props();
-
-  function handleKeydown(e: KeyboardEvent) {
-    const key = e.key.toUpperCase();
-    if (key.length === 1 && key >= 'A' && key <= 'Z') {
-      oninput(key);
-    }
-  }
+  let { oninput }: { oninput: (text: string) => void } = $props();
 </script>
 
 <div class="plaintext-section">
@@ -15,7 +8,7 @@
     id="plaintext"
     data-testid="plaintext-input"
     placeholder="Type letters A–Z..."
-    onkeydown={handleKeydown}
+    oninput={(e) => oninput(e.currentTarget.value)}
   ></textarea>
 </div>
 
