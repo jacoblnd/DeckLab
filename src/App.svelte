@@ -2,23 +2,17 @@
   import PlaintextInput from './components/PlaintextInput.svelte';
   import CiphertextOutput from './components/CiphertextOutput.svelte';
   import DeckView from './components/DeckView.svelte';
-  import { createInitialDeck, encipherStep } from './lib/cipher/deck';
+  import { encipher } from './lib/cipher/deck';
 
-  let deck = $state(createInitialDeck());
-  let ciphertext = $state('');
-
-  function handleInput(char: string) {
-    const result = encipherStep(deck, char);
-    deck = result.newDeck;
-    ciphertext += result.ciphertextChar;
-  }
+  let plaintext = $state('');
+  let result = $derived(encipher(plaintext));
 </script>
 
 <main>
   <h1>DeckLab</h1>
-  <PlaintextInput oninput={handleInput} />
-  <CiphertextOutput {ciphertext} />
-  <DeckView {deck} />
+  <PlaintextInput oninput={(text) => plaintext = text} />
+  <CiphertextOutput ciphertext={result.ciphertext} />
+  <DeckView deck={result.deck} />
 </main>
 
 <style>
