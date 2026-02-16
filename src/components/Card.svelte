@@ -1,8 +1,14 @@
 <script lang="ts">
-  let { letter }: { letter: string } = $props();
+  const SWAP_COLORS = ['#e06c75', '#e5c07b', '#61afef', '#98c379'];
+
+  let { letter, swapPair = null }: { letter: string; swapPair?: number | null } = $props();
 </script>
 
-<div class="card">
+<div
+  class="card"
+  class:highlighted={swapPair != null}
+  style:background-color={swapPair != null ? SWAP_COLORS[swapPair] : undefined}
+>
   {letter}
 </div>
 
@@ -19,5 +25,8 @@
     font-weight: 600;
     font-family: monospace;
     user-select: none;
+  }
+  .highlighted {
+    color: #1e1e1e;
   }
 </style>

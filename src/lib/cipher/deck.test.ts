@@ -175,10 +175,21 @@ describe('encipher', () => {
     expect(result.ciphertext).toHaveLength(4);
   });
 
-  it('returns initial deck and empty ciphertext for empty input', () => {
+  it('returns initial deck, empty ciphertext, and null lastTransformation for empty input', () => {
     const result = encipher('', mapping);
     expect(result.ciphertext).toBe('');
     expect(result.deck).toEqual(createInitialDeck());
+    expect(result.lastTransformation).toBeNull();
+  });
+
+  it('returns the transformation of the last PT symbol as lastTransformation', () => {
+    const result = encipher('ab', mapping);
+    expect(result.lastTransformation).toEqual(mapping['B']);
+  });
+
+  it('returns the only transformation when a single character is enciphered', () => {
+    const result = encipher('x', mapping);
+    expect(result.lastTransformation).toEqual(mapping['X']);
   });
 
   it('same plaintext + same seed = same ciphertext', () => {

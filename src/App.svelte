@@ -16,7 +16,7 @@
   <h1>DeckLab</h1>
   <PlaintextInput oninput={(text) => plaintext = text} />
   <CiphertextOutput ciphertext={result.ciphertext} />
-  <DeckView deck={result.deck} />
+  <DeckView deck={result.deck} lastTransformation={result.lastTransformation} />
 </main>
 
 <style>
