@@ -3,9 +3,13 @@
   import CiphertextOutput from './components/CiphertextOutput.svelte';
   import DeckView from './components/DeckView.svelte';
   import { encipher } from './lib/cipher/deck';
+  import { generateCipherMapping } from './lib/cipher/generate';
+
+  const seed = Math.floor(Math.random() * 2 ** 32);
+  const mapping = generateCipherMapping(seed);
 
   let plaintext = $state('');
-  let result = $derived(encipher(plaintext));
+  let result = $derived(encipher(plaintext, mapping));
 </script>
 
 <main>
