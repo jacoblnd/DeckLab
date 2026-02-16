@@ -1,29 +1,45 @@
 export type DeckState = string[];
+export type Swap = [number, number];
+export type Transformation = [Swap, Swap, Swap, Swap];
+export type CipherMapping = Record<string, Transformation>;
 
 export function createInitialDeck(): DeckState {
   return Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 }
 
+export function applyTransformation(deck: DeckState, transformation: Transformation): DeckState {
+  const newDeck = [...deck];
+  for (const [i, j] of transformation) {
+    [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
+  }
+  return newDeck;
+}
+
 export function encipherStep(
   deck: DeckState,
-  plaintextChar: string
+  plaintextChar: string,
+  mapping: CipherMapping
 ): { newDeck: DeckState; ciphertextChar: string } {
-  // Stub: returns character unchanged and deck unmodified.
-  // Real cipher logic will be implemented later.
+  const upper = plaintextChar.toUpperCase();
+  const transformation = mapping[upper];
+  const newDeck = applyTransformation(deck, transformation);
   return {
-    newDeck: [...deck],
-    ciphertextChar: plaintextChar.toUpperCase(),
+    newDeck,
+    ciphertextChar: newDeck[0],
   };
 }
 
-export function encipher(plaintext: string): { deck: DeckState; ciphertext: string } {
+export function encipher(
+  plaintext: string,
+  mapping: CipherMapping
+): { deck: DeckState; ciphertext: string } {
   let deck = createInitialDeck();
   let ciphertext = '';
 
   for (const char of plaintext) {
     const upper = char.toUpperCase();
     if (upper >= 'A' && upper <= 'Z') {
-      const result = encipherStep(deck, upper);
+      const result = encipherStep(deck, upper, mapping);
       deck = result.newDeck;
       ciphertext += result.ciphertextChar;
     }
