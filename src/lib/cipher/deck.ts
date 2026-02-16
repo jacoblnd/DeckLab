@@ -32,18 +32,20 @@ export function encipherStep(
 export function encipher(
   plaintext: string,
   mapping: CipherMapping
-): { deck: DeckState; ciphertext: string } {
+): { deck: DeckState; ciphertext: string; lastTransformation: Transformation | null } {
   let deck = createInitialDeck();
   let ciphertext = '';
+  let lastTransformation: Transformation | null = null;
 
   for (const char of plaintext) {
     const upper = char.toUpperCase();
     if (upper >= 'A' && upper <= 'Z') {
       const result = encipherStep(deck, upper, mapping);
+      lastTransformation = mapping[upper];
       deck = result.newDeck;
       ciphertext += result.ciphertextChar;
     }
   }
 
-  return { deck, ciphertext };
+  return { deck, ciphertext, lastTransformation };
 }
