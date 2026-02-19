@@ -12,8 +12,7 @@ swaps with to ensure that all 26 swaps are unique.
 The constant sliding window deck cipher has the same properties as the randomly-generated
 deck cipher described below.
 
-The randomize deck button generates a deck with transfomrations with the following 
-properties:
+The randomize deck button generates a deck cipher with the following properties:
 
 1. Each PT symbol maps to 4 swaps.
 2. No 2 PT symbols map to the same set of swaps.
