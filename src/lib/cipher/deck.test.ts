@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialDeck, applyTransformation, encipherStep, encipher } from './deck';
 import type { Transformation, CipherMapping } from './deck';
-import { generateCipherMapping } from './generate';
+import { generateCipherMapping, generateSlidingWindowMapping, transformationKey } from './generate';
 import { createRng } from './prng';
 
 // ── PRNG ──
@@ -141,6 +141,68 @@ describe('generateCipherMapping', () => {
     const a = generateCipherMapping(1);
     const b = generateCipherMapping(2);
     expect(a).not.toEqual(b);
+  });
+});
+
+// ── Sliding window generation ──
+
+describe('generateSlidingWindowMapping', () => {
+  const mapping = generateSlidingWindowMapping();
+
+  it('produces a mapping for all 26 letters', () => {
+    for (let i = 0; i < 26; i++) {
+      const letter = String.fromCharCode(65 + i);
+      expect(mapping[letter]).toBeDefined();
+    }
+  });
+
+  it('each transformation has exactly 4 swaps with 8 distinct positions', () => {
+    for (const t of Object.values(mapping)) {
+      expect(t).toHaveLength(4);
+      const positions = t.flat();
+      expect(positions).toHaveLength(8);
+      expect(new Set(positions).size).toBe(8);
+    }
+  });
+
+  it('every transformation includes position 0', () => {
+    for (const t of Object.values(mapping)) {
+      expect(t[0][0]).toBe(0);
+    }
+  });
+
+  it('all 26 transformations are unique', () => {
+    const keys = Object.values(mapping).map(transformationKey);
+    expect(new Set(keys).size).toBe(26);
+  });
+
+  it('position 0 partner rotates through the window per letter', () => {
+    // A (i=0): partner = window[0] = 1, B (i=1): partner = window[1] = 3
+    expect(mapping['A'][0]).toEqual([0, 1]);
+    expect(mapping['B'][0]).toEqual([0, 3]);
+    // H (i=7): partner = window[0] again (7 % 7 = 0), but window starts at 8
+    expect(mapping['H'][0]).toEqual([0, 8]);
+  });
+
+  it('is deterministic — same result every time', () => {
+    const a = generateSlidingWindowMapping();
+    const b = generateSlidingWindowMapping();
+    expect(a).toEqual(b);
+  });
+
+  it('all non-zero positions are in range 1–25', () => {
+    for (const t of Object.values(mapping)) {
+      for (const [a, b] of t) {
+        if (a !== 0) {
+          expect(a).toBeGreaterThanOrEqual(1);
+          expect(a).toBeLessThanOrEqual(25);
+        }
+        if (b !== 0) {
+          expect(b).toBeGreaterThanOrEqual(1);
+          expect(b).toBeLessThanOrEqual(25);
+        }
+      }
+    }
   });
 });
 
