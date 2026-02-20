@@ -4,7 +4,11 @@
 
   const SWAP_COLORS = ['#e06c75', '#e5c07b', '#61afef', '#98c379'];
 
-  let { deck, lastTransformation }: { deck: string[]; lastTransformation: Transformation | null } = $props();
+  let { deck, lastTransformation, showHighlights }: {
+    deck: string[];
+    lastTransformation: Transformation | null;
+    showHighlights: boolean;
+  } = $props();
 
   // Map each deck position to its swap pair index (0–3), or null if not swapped.
   let swapPairMap = $derived.by(() => {
@@ -22,17 +26,19 @@
 
 <div class="deck-section">
   <h2 class="deck-label">Current Deck State</h2>
-  <div class="legend">
-    {#each SWAP_COLORS as color, i}
-      <span class="legend-item">
-        <span class="swatch" style:background-color={color}></span>
-        Swap {i + 1}
-      </span>
-    {/each}
-  </div>
+  {#if showHighlights}
+    <div class="legend">
+      {#each SWAP_COLORS as color, i}
+        <span class="legend-item">
+          <span class="swatch" style:background-color={color}></span>
+          Swap {i + 1}
+        </span>
+      {/each}
+    </div>
+  {/if}
   <div class="deck" data-testid="deck">
     {#each deck as letter, i}
-      <Card {letter} swapPair={swapPairMap[i]} />
+      <Card {letter} swapPair={showHighlights ? swapPairMap[i] : null} />
     {/each}
   </div>
 </div>

@@ -8,6 +8,7 @@
 
   let mapping = $state(generateSlidingWindowMapping());
   let plaintext = $state('');
+  let showHighlights = $state(true);
   let result = $derived(encipher(plaintext, mapping));
 
   function randomizeMapping() {
@@ -21,13 +22,17 @@
     <h1>DeckLab</h1>
     <div class="controls">
       <button onclick={randomizeMapping}>Randomize Cipher</button>
+      <label class="highlight-toggle">
+        <input type="checkbox" bind:checked={showHighlights} />
+        Show swap highlights
+      </label>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
     <CiphertextOutput ciphertext={result.ciphertext} />
-    <DeckView deck={result.deck} lastTransformation={result.lastTransformation} />
+    <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} />
   </main>
   <div class="right-panel">
-    <MultiDeckView steps={result.steps} />
+    <MultiDeckView steps={result.steps} {showHighlights} />
   </div>
 </div>
 
@@ -63,7 +68,18 @@
 
   .controls {
     display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 1rem;
+  }
+
+  .highlight-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
   }
 
   button {
