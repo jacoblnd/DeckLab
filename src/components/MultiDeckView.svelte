@@ -3,7 +3,7 @@
 
   const SWAP_COLORS = ['#e06c75', '#e5c07b', '#61afef', '#98c379'];
 
-  let { steps }: { steps: CipherStep[] } = $props();
+  let { steps, showHighlights }: { steps: CipherStep[]; showHighlights: boolean } = $props();
 
   function buildSwapPairMap(transformation: Transformation): (number | null)[] {
     const map: (number | null)[] = new Array(26).fill(null);
@@ -22,10 +22,11 @@
     <div class="column">
       <div class="col-label">{step.ciphertextChar}</div>
       {#each step.deck as letter, i}
+        {@const pair = showHighlights ? swapPairMap[i] : null}
         <div
           class="mini-card"
-          class:highlighted={swapPairMap[i] != null}
-          style:background-color={swapPairMap[i] != null ? SWAP_COLORS[swapPairMap[i]!] : undefined}
+          class:highlighted={pair != null}
+          style:background-color={pair != null ? SWAP_COLORS[pair] : undefined}
         >
           {letter}
         </div>
