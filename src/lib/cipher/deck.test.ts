@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialDeck, applyTransformation, encipherStep, encipher } from './deck';
-import type { Transformation, CipherMapping } from './deck';
+import type { Transformation, CipherMapping, CipherStep } from './deck';
 import { generateCipherMapping, generateSlidingWindowMapping, transformationKey } from './generate';
 import { createRng } from './prng';
 
@@ -268,5 +268,42 @@ describe('encipher', () => {
     const a = encipher('test', m1);
     const b = encipher('test', m2);
     expect(a.ciphertext).not.toBe(b.ciphertext);
+  });
+
+  it('returns empty steps for empty input', () => {
+    const result = encipher('', mapping);
+    expect(result.steps).toEqual([]);
+  });
+
+  it('returns empty steps when input has no alphabetic characters', () => {
+    const result = encipher('123!@#', mapping);
+    expect(result.steps).toEqual([]);
+  });
+
+  it('returns one step per ciphertext character (non-letters filtered)', () => {
+    const result = encipher('h3llo!', mapping);
+    expect(result.steps).toHaveLength(4);
+    expect(result.steps).toHaveLength(result.ciphertext.length);
+  });
+
+  it('each step ciphertextChar matches the corresponding character in ciphertext', () => {
+    const result = encipher('hello', mapping);
+    for (let i = 0; i < result.steps.length; i++) {
+      expect(result.steps[i].ciphertextChar).toBe(result.ciphertext[i]);
+    }
+  });
+
+  it('each step transformation matches the mapping entry for the plaintext letter', () => {
+    const result = encipher('ab', mapping);
+    expect(result.steps[0].transformation).toEqual(mapping['A']);
+    expect(result.steps[1].transformation).toEqual(mapping['B']);
+  });
+
+  it('each step deck has 26 letters and equals the top-card of that step', () => {
+    const result = encipher('hello', mapping);
+    for (const step of result.steps) {
+      expect(step.deck).toHaveLength(26);
+      expect(step.deck[0]).toBe(step.ciphertextChar);
+    }
   });
 });

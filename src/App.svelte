@@ -2,6 +2,7 @@
   import PlaintextInput from './components/PlaintextInput.svelte';
   import CiphertextOutput from './components/CiphertextOutput.svelte';
   import DeckView from './components/DeckView.svelte';
+  import MultiDeckView from './components/MultiDeckView.svelte';
   import { encipher } from './lib/cipher/deck';
   import { generateCipherMapping, generateSlidingWindowMapping } from './lib/cipher/generate';
 
@@ -15,33 +16,56 @@
   }
 </script>
 
-<main>
-  <h1>DeckLab</h1>
-  <div class="controls">
-    <button onclick={randomizeMapping}>Randomize Deck</button>
+<div class="app-layout">
+  <main class="left-panel">
+    <h1>DeckLab</h1>
+    <div class="controls">
+      <button onclick={randomizeMapping}>Randomize Deck</button>
+    </div>
+    <PlaintextInput oninput={(text) => plaintext = text} />
+    <CiphertextOutput ciphertext={result.ciphertext} />
+    <DeckView deck={result.deck} lastTransformation={result.lastTransformation} />
+  </main>
+  <div class="right-panel">
+    <MultiDeckView steps={result.steps} />
   </div>
-  <PlaintextInput oninput={(text) => plaintext = text} />
-  <CiphertextOutput ciphertext={result.ciphertext} />
-  <DeckView deck={result.deck} lastTransformation={result.lastTransformation} />
-</main>
+</div>
 
 <style>
-  main {
+  .app-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+
+  .left-panel {
+    flex-shrink: 0;
+    width: 700px;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 2rem;
   }
+
+  .right-panel {
+    flex: 1;
+    overflow-x: auto;
+    padding: 2rem 1rem;
+    min-width: 0;
+    align-self: stretch;
+  }
+
   h1 {
     text-align: center;
     margin: 0;
   }
+
   .controls {
     display: flex;
     justify-content: center;
   }
+
   button {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
@@ -51,6 +75,7 @@
     color: inherit;
     cursor: pointer;
   }
+
   button:hover {
     border-color: #888;
   }
