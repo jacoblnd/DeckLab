@@ -20,7 +20,7 @@
   <main class="left-panel">
     <h1>DeckLab</h1>
     <div class="controls">
-      <button onclick={randomizeMapping}>Randomize Deck</button>
+      <button onclick={randomizeMapping}>Randomize Cipher</button>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
     <CiphertextOutput ciphertext={result.ciphertext} />
