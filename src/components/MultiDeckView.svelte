@@ -1,7 +1,9 @@
 <script lang="ts">
   import type { CipherStep, Transformation } from '../lib/cipher/deck';
+  import { createInitialDeck } from '../lib/cipher/deck';
 
   const SWAP_COLORS = ['#e06c75', '#e5c07b', '#61afef', '#98c379'];
+  const initialDeck = createInitialDeck();
 
   let { steps, showHighlights }: { steps: CipherStep[]; showHighlights: boolean } = $props();
 
@@ -17,6 +19,12 @@
 </script>
 
 <div class="multi-deck" data-testid="multi-deck">
+  <div class="column">
+    <div class="col-label">—</div>
+    {#each initialDeck as letter}
+      <div class="mini-card">{letter}</div>
+    {/each}
+  </div>
   {#each steps as step}
     {@const swapPairMap = buildSwapPairMap(step.transformation)}
     <div class="column">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isomorphPattern, findIsomorphs, isomorphInterestingness, sortByInterestingness } from './isomorph';
+import { isomorphPattern, findIsomorphs, isomorphInterestingness, sortByInterestingness, countPatternOccurrences } from './isomorph';
 import type { Isomorph } from './isomorph';
 
 // ── isomorphPattern ──
@@ -161,5 +161,57 @@ describe('sortByInterestingness', () => {
     const sorted = sortByInterestingness([later, earlier]);
     expect(sorted[0]).toEqual(earlier);
     expect(sorted[1]).toEqual(later);
+  });
+
+  it('sorts by descending count when patternCounts is provided, before interestingness', () => {
+    // 'aa' density 1.0 > 'a.a' density 0.667, but if 'a.a' has count 3 and 'aa' has count 2,
+    // 'a.a' should rank first because count is the primary key
+    const lo: Isomorph = { pattern: 'aa', startA: 0, startB: 5 };
+    const hi: Isomorph = { pattern: 'a.a', startA: 0, startB: 10 };
+    const counts = new Map([['aa', 2], ['a.a', 3]]);
+    const sorted = sortByInterestingness([lo, hi], counts);
+    expect(sorted[0]).toEqual(hi);
+    expect(sorted[1]).toEqual(lo);
+  });
+});
+
+// ── countPatternOccurrences ──
+
+describe('countPatternOccurrences', () => {
+  it('returns an empty map for an empty array', () => {
+    expect(countPatternOccurrences([])).toEqual(new Map());
+  });
+
+  it('counts one pair for a single entry', () => {
+    const isomorphs: Isomorph[] = [{ pattern: 'a.a', startA: 0, startB: 5 }];
+    expect(countPatternOccurrences(isomorphs).get('a.a')).toBe(1);
+  });
+
+  it('counts three pairs when three entries share a pattern', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'aa.', startA: 0, startB: 12 },
+      { pattern: 'aa.', startA: 6, startB: 12 },
+    ];
+    expect(countPatternOccurrences(isomorphs).get('aa.')).toBe(3);
+  });
+
+  it('counts each pattern independently when multiple patterns are present', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'a.a', startA: 1, startB: 8 },
+      { pattern: 'a.a', startA: 1, startB: 15 },
+    ];
+    const counts = countPatternOccurrences(isomorphs);
+    expect(counts.get('aa.')).toBe(1);
+    expect(counts.get('a.a')).toBe(2);
+  });
+
+  it('counts two pairs for two entries with the same pattern', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'aa.', startA: 0, startB: 12 },
+    ];
+    expect(countPatternOccurrences(isomorphs).get('aa.')).toBe(2);
   });
 });
