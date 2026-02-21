@@ -81,19 +81,25 @@ describe('findIsomorphs', () => {
   });
 
   it('returns all valid pairs when three isomorphic windows are non-overlapping', () => {
-    // 'aab' appears at positions 0, 6, 12 — all pairs (0,6), (0,12), (6,12) are valid
-    const ct = 'aabxyzaabpqraab';
+    // 'aba' appears at positions 0, 6, 12 — all pairs (0,6), (0,12), (6,12) are valid
+    const ct = 'abaxyzabaxyzaba';
     const results = findIsomorphs(ct);
-    const aaDot = results.filter(r => r.pattern === 'aa.');
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 0, startB: 6 });
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 0, startB: 12 });
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 6, startB: 12 });
+    const aDotA = results.filter(r => r.pattern === 'a.a');
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 0, startB: 6 });
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 0, startB: 12 });
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 6, startB: 12 });
   });
 
   it('excludes patterns that start with one or more periods', () => {
     // 'xaa' at positions 0 and 3 in 'xaaxaa' would form pattern '.aa' — leading '.' → excluded
     const results = findIsomorphs('xaaxaa');
     expect(results.filter(r => r.pattern.startsWith('.'))).toHaveLength(0);
+  });
+
+  it('excludes patterns that end with one or more periods', () => {
+    // 'aax' at positions 0 and 3 in 'aaxaax' would form pattern 'aa.' — trailing '.' → excluded
+    const results = findIsomorphs('aaxaax');
+    expect(results.filter(r => r.pattern.endsWith('.'))).toHaveLength(0);
   });
 
   it('uses the corrected doc example with partial isomorph structure', () => {

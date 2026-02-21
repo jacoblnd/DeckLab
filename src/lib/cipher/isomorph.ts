@@ -102,7 +102,7 @@ export function findIsomorphs(ciphertext: string): Isomorph[] {
 
     for (let i = 0; i <= L - n; i++) {
       const pattern = isomorphPattern(ciphertext.slice(i, i + n));
-      if (!/[a-z]/.test(pattern) || pattern[0] === '.') continue; // skip trivial or leading-period patterns
+      if (!/[a-z]/.test(pattern) || pattern[0] === '.' || pattern[pattern.length - 1] === '.') continue; // skip trivial, leading-period, or trailing-period patterns
 
       const group = groups.get(pattern);
       if (group) {
