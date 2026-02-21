@@ -90,6 +90,12 @@ describe('findIsomorphs', () => {
     expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 6, startB: 12 });
   });
 
+  it('excludes patterns that start with one or more periods', () => {
+    // 'xaa' at positions 0 and 3 in 'xaaxaa' would form pattern '.aa' — leading '.' → excluded
+    const results = findIsomorphs('xaaxaa');
+    expect(results.filter(r => r.pattern.startsWith('.'))).toHaveLength(0);
+  });
+
   it('uses the corrected doc example with partial isomorph structure', () => {
     // CT1 'yfgepxleyx' → 'a..b.c.bac', CT2 'qrmjmltjql' → 'a.bcbd.cad'
     // CT1's constraints (pos 0==8, pos 3==7, pos 5==9) are all satisfied by CT2
