@@ -3,13 +3,31 @@
   import CiphertextOutput from './components/CiphertextOutput.svelte';
   import DeckView from './components/DeckView.svelte';
   import MultiDeckView from './components/MultiDeckView.svelte';
+  import IsomorphList from './components/IsomorphList.svelte';
   import { encipher } from './lib/cipher/deck';
   import { generateCipherMapping, generateSlidingWindowMapping } from './lib/cipher/generate';
+  import { findIsomorphs } from './lib/cipher/isomorph';
+  import type { Isomorph } from './lib/cipher/isomorph';
 
   let mapping = $state(generateSlidingWindowMapping());
   let plaintext = $state('');
   let showHighlights = $state(true);
+  let showIsomorphs = $state(false);
+  let selectedIsomorph = $state<Isomorph | null>(null);
+
   let result = $derived(encipher(plaintext, mapping));
+  let isomorphs = $derived(findIsomorphs(result.ciphertext));
+  let ciphertextHighlight = $derived(
+    selectedIsomorph
+      ? { startA: selectedIsomorph.startA, startB: selectedIsomorph.startB, length: selectedIsomorph.pattern.length }
+      : null
+  );
+
+  // Clear selection whenever the ciphertext changes to prevent stale highlights
+  $effect(() => {
+    result.ciphertext;
+    selectedIsomorph = null;
+  });
 
   function randomizeMapping() {
     const seed = Math.floor(Math.random() * 2 ** 32);
@@ -26,10 +44,22 @@
         <input type="checkbox" bind:checked={showHighlights} />
         Show swap highlights
       </label>
+      <label class="highlight-toggle">
+        <input type="checkbox" bind:checked={showIsomorphs} />
+        Show isomorphs
+      </label>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
-    <CiphertextOutput ciphertext={result.ciphertext} />
+    <CiphertextOutput ciphertext={result.ciphertext} highlight={ciphertextHighlight} />
     <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} />
+    {#if showIsomorphs}
+      <IsomorphList
+        {isomorphs}
+        ciphertext={result.ciphertext}
+        selected={selectedIsomorph}
+        onselect={(iso) => selectedIsomorph = iso}
+      />
+    {/if}
   </main>
   <div class="right-panel">
     <MultiDeckView steps={result.steps} {showHighlights} />
@@ -71,6 +101,7 @@
     align-items: center;
     justify-content: center;
     gap: 1rem;
+    flex-wrap: wrap;
   }
 
   .highlight-toggle {
