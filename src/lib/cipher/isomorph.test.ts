@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isomorphPattern, findIsomorphs, isomorphInterestingness, sortByInterestingness } from './isomorph';
+import { isomorphPattern, findIsomorphs, isomorphInterestingness, sortByInterestingness, countPatternOccurrences } from './isomorph';
 import type { Isomorph } from './isomorph';
 
 // ── isomorphPattern ──
@@ -81,19 +81,25 @@ describe('findIsomorphs', () => {
   });
 
   it('returns all valid pairs when three isomorphic windows are non-overlapping', () => {
-    // 'aab' appears at positions 0, 6, 12 — all pairs (0,6), (0,12), (6,12) are valid
-    const ct = 'aabxyzaabpqraab';
+    // 'aba' appears at positions 0, 6, 12 — all pairs (0,6), (0,12), (6,12) are valid
+    const ct = 'abaxyzabaxyzaba';
     const results = findIsomorphs(ct);
-    const aaDot = results.filter(r => r.pattern === 'aa.');
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 0, startB: 6 });
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 0, startB: 12 });
-    expect(aaDot).toContainEqual({ pattern: 'aa.', startA: 6, startB: 12 });
+    const aDotA = results.filter(r => r.pattern === 'a.a');
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 0, startB: 6 });
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 0, startB: 12 });
+    expect(aDotA).toContainEqual({ pattern: 'a.a', startA: 6, startB: 12 });
   });
 
   it('excludes patterns that start with one or more periods', () => {
     // 'xaa' at positions 0 and 3 in 'xaaxaa' would form pattern '.aa' — leading '.' → excluded
     const results = findIsomorphs('xaaxaa');
     expect(results.filter(r => r.pattern.startsWith('.'))).toHaveLength(0);
+  });
+
+  it('excludes patterns that end with one or more periods', () => {
+    // 'aax' at positions 0 and 3 in 'aaxaax' would form pattern 'aa.' — trailing '.' → excluded
+    const results = findIsomorphs('aaxaax');
+    expect(results.filter(r => r.pattern.endsWith('.'))).toHaveLength(0);
   });
 
   it('uses the corrected doc example with partial isomorph structure', () => {
@@ -161,5 +167,57 @@ describe('sortByInterestingness', () => {
     const sorted = sortByInterestingness([later, earlier]);
     expect(sorted[0]).toEqual(earlier);
     expect(sorted[1]).toEqual(later);
+  });
+
+  it('sorts by descending count when patternCounts is provided, before interestingness', () => {
+    // 'aa' density 1.0 > 'a.a' density 0.667, but if 'a.a' has count 3 and 'aa' has count 2,
+    // 'a.a' should rank first because count is the primary key
+    const lo: Isomorph = { pattern: 'aa', startA: 0, startB: 5 };
+    const hi: Isomorph = { pattern: 'a.a', startA: 0, startB: 10 };
+    const counts = new Map([['aa', 2], ['a.a', 3]]);
+    const sorted = sortByInterestingness([lo, hi], counts);
+    expect(sorted[0]).toEqual(hi);
+    expect(sorted[1]).toEqual(lo);
+  });
+});
+
+// ── countPatternOccurrences ──
+
+describe('countPatternOccurrences', () => {
+  it('returns an empty map for an empty array', () => {
+    expect(countPatternOccurrences([])).toEqual(new Map());
+  });
+
+  it('counts one pair for a single entry', () => {
+    const isomorphs: Isomorph[] = [{ pattern: 'a.a', startA: 0, startB: 5 }];
+    expect(countPatternOccurrences(isomorphs).get('a.a')).toBe(1);
+  });
+
+  it('counts three pairs when three entries share a pattern', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'aa.', startA: 0, startB: 12 },
+      { pattern: 'aa.', startA: 6, startB: 12 },
+    ];
+    expect(countPatternOccurrences(isomorphs).get('aa.')).toBe(3);
+  });
+
+  it('counts each pattern independently when multiple patterns are present', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'a.a', startA: 1, startB: 8 },
+      { pattern: 'a.a', startA: 1, startB: 15 },
+    ];
+    const counts = countPatternOccurrences(isomorphs);
+    expect(counts.get('aa.')).toBe(1);
+    expect(counts.get('a.a')).toBe(2);
+  });
+
+  it('counts two pairs for two entries with the same pattern', () => {
+    const isomorphs: Isomorph[] = [
+      { pattern: 'aa.', startA: 0, startB: 6 },
+      { pattern: 'aa.', startA: 0, startB: 12 },
+    ];
+    expect(countPatternOccurrences(isomorphs).get('aa.')).toBe(2);
   });
 });

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { sortByInterestingness } from '../lib/cipher/isomorph';
+  import { sortByInterestingness, countPatternOccurrences } from '../lib/cipher/isomorph';
   import type { Isomorph } from '../lib/cipher/isomorph';
 
   let {
@@ -14,7 +14,8 @@
     onselect: (iso: Isomorph | null) => void;
   } = $props();
 
-  let sorted = $derived(sortByInterestingness(isomorphs));
+  let patternCounts = $derived(countPatternOccurrences(isomorphs));
+  let sorted = $derived(sortByInterestingness(isomorphs, patternCounts));
 
   function isSelected(iso: Isomorph): boolean {
     return selected != null
@@ -37,7 +38,10 @@
         class:selected={sel}
         onclick={() => onselect(sel ? null : iso)}
       >
-        <span class="iso-pattern">{iso.pattern}</span>
+        <span class="iso-header">
+          <span class="iso-pattern">{iso.pattern}</span>
+          <span class="iso-count">×{patternCounts.get(iso.pattern) ?? 0}</span>
+        </span>
         <span class="iso-positions">@{iso.startA} · @{iso.startB}</span>
         <span class="iso-subs">
           <span class="sub-a">{subA}</span>
@@ -91,9 +95,20 @@
     background: rgba(198, 120, 221, 0.1);
   }
 
+  .iso-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
   .iso-pattern {
     font-weight: 700;
     letter-spacing: 0.05em;
+  }
+
+  .iso-count {
+    color: #abb2bf;
+    font-size: 0.75rem;
   }
 
   .iso-positions {

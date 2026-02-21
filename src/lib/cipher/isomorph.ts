@@ -59,11 +59,31 @@ export function isomorphInterestingness(pattern: string): number {
 }
 
 /**
- * Returns a new array of isomorphs sorted by descending interestingness.
- * Ties are broken by pattern length descending, then startA ascending.
+ * Counts the number of isomorph pairs per pattern across a collection.
+ * The returned count for each pattern equals the number of list entries
+ * that share that pattern.
  */
-export function sortByInterestingness(isomorphs: Isomorph[]): Isomorph[] {
+export function countPatternOccurrences(isomorphs: Isomorph[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const iso of isomorphs) {
+    counts.set(iso.pattern, (counts.get(iso.pattern) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Returns a new array of isomorphs sorted by descending occurrence count,
+ * then descending interestingness, then descending pattern length, then
+ * ascending startA. Pass patternCounts from countPatternOccurrences; omit
+ * to sort by interestingness alone (count treated as 0 for all).
+ */
+export function sortByInterestingness(
+  isomorphs: Isomorph[],
+  patternCounts: Map<string, number> = new Map()
+): Isomorph[] {
   return [...isomorphs].sort((a, b) => {
+    const dc = (patternCounts.get(b.pattern) ?? 0) - (patternCounts.get(a.pattern) ?? 0);
+    if (dc !== 0) return dc;
     const di = isomorphInterestingness(b.pattern) - isomorphInterestingness(a.pattern);
     if (di !== 0) return di;
     const dl = b.pattern.length - a.pattern.length;
@@ -82,7 +102,7 @@ export function findIsomorphs(ciphertext: string): Isomorph[] {
 
     for (let i = 0; i <= L - n; i++) {
       const pattern = isomorphPattern(ciphertext.slice(i, i + n));
-      if (!/[a-z]/.test(pattern) || pattern[0] === '.') continue; // skip trivial or leading-period patterns
+      if (!/[a-z]/.test(pattern) || pattern[0] === '.' || pattern[pattern.length - 1] === '.') continue; // skip trivial, leading-period, or trailing-period patterns
 
       const group = groups.get(pattern);
       if (group) {
