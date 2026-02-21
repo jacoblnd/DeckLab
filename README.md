@@ -83,6 +83,7 @@ To interact with isomorphs specifically in the eye messages, see Tomster12's [Is
 Isomorphs in the ciphertext are automatically generated in the background.
 They can be visualized by checking the `Show Isomorphs` box, after which they will appear below the main deck state.
 Selecting one of the isomorphs will visually highlight which 2 substrings of the ciphertext are isomorphic with each other.
+Isomorphs of length 2 are omitted. They don't seem that interesting.
 
 
 ## Future Feature Thoughts
