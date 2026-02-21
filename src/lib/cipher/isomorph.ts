@@ -49,6 +49,29 @@ export function isomorphPattern(s: string): string {
  * Trivial windows (all characters distinct, pattern all '.') are skipped.
  * Non-overlap condition: startB >= startA + n.
  */
+/** Fraction of non-period characters in a pattern. Range [0, 1]. */
+export function isomorphInterestingness(pattern: string): number {
+  let repeats = 0;
+  for (const c of pattern) {
+    if (c !== '.') repeats++;
+  }
+  return repeats / pattern.length;
+}
+
+/**
+ * Returns a new array of isomorphs sorted by descending interestingness.
+ * Ties are broken by pattern length descending, then startA ascending.
+ */
+export function sortByInterestingness(isomorphs: Isomorph[]): Isomorph[] {
+  return [...isomorphs].sort((a, b) => {
+    const di = isomorphInterestingness(b.pattern) - isomorphInterestingness(a.pattern);
+    if (di !== 0) return di;
+    const dl = b.pattern.length - a.pattern.length;
+    if (dl !== 0) return dl;
+    return a.startA - b.startA;
+  });
+}
+
 export function findIsomorphs(ciphertext: string): Isomorph[] {
   const result: Isomorph[] = [];
   const L = ciphertext.length;

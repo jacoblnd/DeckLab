@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isomorphPattern, findIsomorphs } from './isomorph';
+import { isomorphPattern, findIsomorphs, isomorphInterestingness, sortByInterestingness } from './isomorph';
+import type { Isomorph } from './isomorph';
 
 // ── isomorphPattern ──
 
@@ -94,5 +95,65 @@ describe('findIsomorphs', () => {
     // CT1's constraints (pos 0==8, pos 3==7, pos 5==9) are all satisfied by CT2
     expect(isomorphPattern('yfgepxleyx')).toBe('a..b.c.bac');
     expect(isomorphPattern('qrmjmltjql')).toBe('a.bcbd.cad');
+  });
+});
+
+// ── isomorphInterestingness ──
+
+describe('isomorphInterestingness', () => {
+  it('returns 0 for an all-period pattern', () => {
+    expect(isomorphInterestingness('.....')).toBe(0);
+  });
+
+  it('returns 1 for an all-letter pattern', () => {
+    expect(isomorphInterestingness('aaaa')).toBe(1);
+  });
+
+  it('returns the correct fraction for a mixed pattern', () => {
+    // 'a..ba.ab' has 5 non-period chars out of 8
+    expect(isomorphInterestingness('a..ba.ab')).toBeCloseTo(5 / 8);
+  });
+
+  it('returns the correct fraction for a sparse pattern', () => {
+    // 'a....a' has 2 non-period chars out of 6
+    expect(isomorphInterestingness('a....a')).toBeCloseTo(2 / 6);
+  });
+});
+
+// ── sortByInterestingness ──
+
+describe('sortByInterestingness', () => {
+  it('returns a new array without mutating the input', () => {
+    const input: Isomorph[] = [{ pattern: 'a.a', startA: 0, startB: 5 }];
+    const result = sortByInterestingness(input);
+    expect(result).not.toBe(input);
+    expect(input).toHaveLength(1);
+  });
+
+  it('sorts by descending interestingness (density)', () => {
+    // 'aa' density 1.0, 'a.a' density 0.667 → 'aa' comes first
+    const lo: Isomorph = { pattern: 'a.a', startA: 0, startB: 10 };
+    const hi: Isomorph = { pattern: 'aa', startA: 0, startB: 5 };
+    const sorted = sortByInterestingness([lo, hi]);
+    expect(sorted[0]).toEqual(hi);
+    expect(sorted[1]).toEqual(lo);
+  });
+
+  it('breaks equal-density ties by pattern length descending', () => {
+    // Both 'aa' and 'aaaa' have density 1.0; longer pattern ranks higher
+    const short: Isomorph = { pattern: 'aa', startA: 0, startB: 2 };
+    const long: Isomorph  = { pattern: 'aaaa', startA: 0, startB: 4 };
+    const sorted = sortByInterestingness([short, long]);
+    expect(sorted[0]).toEqual(long);
+    expect(sorted[1]).toEqual(short);
+  });
+
+  it('breaks equal-density and equal-length ties by startA ascending', () => {
+    // Two 'aa' entries at different positions; lower startA comes first
+    const later: Isomorph  = { pattern: 'aa', startA: 2, startB: 4 };
+    const earlier: Isomorph = { pattern: 'aa', startA: 0, startB: 2 };
+    const sorted = sortByInterestingness([later, earlier]);
+    expect(sorted[0]).toEqual(earlier);
+    expect(sorted[1]).toEqual(later);
   });
 });
