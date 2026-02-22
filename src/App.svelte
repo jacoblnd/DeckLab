@@ -12,6 +12,10 @@
   import { findIsomorphs } from './lib/cipher/isomorph';
   import type { Isomorph } from './lib/cipher/isomorph';
 
+  type DisplayToken = { char: string; highlight: 'A' | 'B' | null };
+
+  const PASSTHROUGH = new Set([' ', '\n', '.']);
+
   let mapping = $state(generateSlidingWindowMapping());
   let plaintext = $state('');
   let showHighlights = $state(true);
@@ -25,6 +29,7 @@
   let rotationMax = $state(1);
   let rotationConstant = $state(true);
 
+  // Pure A–Z string: drives encipher, isomorphs, and MultiDeckView alignment
   let filteredPlaintext = $derived(
     [...plaintext]
       .filter(c => { const u = c.toUpperCase(); return u >= 'A' && u <= 'Z'; })
@@ -39,6 +44,35 @@
       ? { startA: selectedIsomorph.startA, startB: selectedIsomorph.startB, length: selectedIsomorph.pattern.length }
       : null
   );
+
+  // Token arrays for display: passthrough chars (space/newline/period) are preserved
+  // in both strips at their original positions; highlight is pre-computed per token.
+  let displayTokens = $derived.by(() => {
+    const ct = result.ciphertext;
+    const hl = ciphertextHighlight;
+    const ptTokens: DisplayToken[] = [];
+    const ctTokens: DisplayToken[] = [];
+    let cipherIdx = 0;
+    for (const raw of plaintext) {
+      if (PASSTHROUGH.has(raw)) {
+        ptTokens.push({ char: raw, highlight: null });
+        ctTokens.push({ char: raw, highlight: null });
+      } else {
+        const u = raw.toUpperCase();
+        if (u >= 'A' && u <= 'Z') {
+          let highlight: 'A' | 'B' | null = null;
+          if (hl) {
+            if (cipherIdx >= hl.startA && cipherIdx < hl.startA + hl.length) highlight = 'A';
+            else if (cipherIdx >= hl.startB && cipherIdx < hl.startB + hl.length) highlight = 'B';
+          }
+          ptTokens.push({ char: u, highlight });
+          ctTokens.push({ char: ct[cipherIdx], highlight });
+          cipherIdx++;
+        }
+      }
+    }
+    return { ptTokens, ctTokens };
+  });
 
   // Clear selection whenever the ciphertext changes to prevent stale highlights
   $effect(() => {
@@ -92,8 +126,8 @@
       </label>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
-    <PlaintextOutput {filteredPlaintext} highlight={ciphertextHighlight} />
-    <CiphertextOutput ciphertext={result.ciphertext} highlight={ciphertextHighlight} />
+    <PlaintextOutput tokens={displayTokens.ptTokens} />
+    <CiphertextOutput tokens={displayTokens.ctTokens} />
     <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} {showAnimations} />
     {#if showIsomorphs}
       <IsomorphList

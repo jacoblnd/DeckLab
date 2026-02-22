@@ -3,12 +3,12 @@
   const HL_B = '#56b6c2';
 
   let {
-    ciphertext,
-    highlight = null,
+    tokens,
   }: {
-    ciphertext: string;
-    highlight: { startA: number; startB: number; length: number } | null;
+    tokens: { char: string; highlight: 'A' | 'B' | null }[];
   } = $props();
+
+  let hasContent = $derived(tokens.length > 0);
 </script>
 
 <div class="ciphertext-section">
@@ -20,17 +20,19 @@
     aria-label="Ciphertext"
     aria-readonly="true"
   >
-    {#if ciphertext.length === 0}
+    {#if !hasContent}
       <span class="placeholder">Ciphertext appears here...</span>
     {:else}
-      {#each ciphertext.split('') as char, i}
-        {@const inA = highlight != null && i >= highlight.startA && i < highlight.startA + highlight.length}
-        {@const inB = highlight != null && i >= highlight.startB && i < highlight.startB + highlight.length}
-        <span
-          class="ct-char"
-          style:background-color={inA ? HL_A : inB ? HL_B : undefined}
-          style:color={inA || inB ? '#1e1e1e' : undefined}
-        >{char}</span>
+      {#each tokens as token}
+        {#if token.char === '\n'}
+          <br />
+        {:else}
+          <span
+            class="ct-char"
+            style:background-color={token.highlight === 'A' ? HL_A : token.highlight === 'B' ? HL_B : undefined}
+            style:color={token.highlight ? '#1e1e1e' : undefined}
+          >{token.char}</span>
+        {/if}
       {/each}
     {/if}
   </div>
