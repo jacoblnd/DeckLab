@@ -827,10 +827,6 @@ PT = "H"  →  transformation for H:
     border-radius: 3px;
   }
 
-  .mock-iso-pos {
-    font-size: 0.75rem;
-    color: #abb2bf;
-  }
 
   /* cipher inspector mock table */
   .mock-table {
