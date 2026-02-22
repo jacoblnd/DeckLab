@@ -47,14 +47,12 @@
   </h2>
   {#if showHighlights && lastTransformation}
     <div class="legend">
+      <span class="legend-label">Swaps:</span>
       {#each lastTransformation.swaps as _, i}
-        <span class="legend-item">
-          <span class="swatch" style:background-color={SWAP_COLORS[i]}></span>
-          Swap {i + 1}
-        </span>
+        <span class="legend-swatch" style:background-color={SWAP_COLORS[i]}>{i + 1}</span>
       {/each}
       {#if lastTransformation.rotation > 0}
-        <span class="legend-item">↺{lastTransformation.rotation}</span>
+        <span class="legend-rotation">↺{lastTransformation.rotation}</span>
       {/if}
     </div>
   {/if}
@@ -93,22 +91,34 @@
 
   .legend {
     display: flex;
-    gap: 1rem;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  .legend-label {
     font-size: 0.8rem;
     color: #abb2bf;
+    margin-right: 0.2rem;
   }
 
-  .legend-item {
-    display: flex;
+  .legend-swatch {
+    display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 2px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: #1e1e1e;
   }
 
-  .swatch {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 2px;
+  .legend-rotation {
+    font-size: 0.8rem;
+    font-family: monospace;
+    color: #abb2bf;
+    margin-left: 0.2rem;
   }
 
   .deck {
