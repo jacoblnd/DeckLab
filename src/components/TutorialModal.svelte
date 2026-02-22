@@ -333,9 +333,11 @@ PT = "H"  →  transformation for H:
           <div class="feature-desc">
             <h3 class="feature-heading">Isomorphs</h3>
             <p>
-              An <strong>isomorph</strong> is a pattern describing which
-              positions in a string share the same character. For example,
-              <code>FHWOFNFO</code> has the isomorph pattern{' '}
+              An <strong>isomorph</strong> is two sequences of text which are
+              substitutions of each other. A slightly-incorrect but more useful
+              definition in the context of this tool is:
+              a pattern describing which positions in a string share the same character.
+              For example, <code>FHWOFNFO</code> has the isomorph pattern{' '}
               <code>a..ba.ab</code> — positions 0, 4, and 6 all contain the same
               character (labeled <code>a</code>), positions 3 and 7 contain the same
               character (labeled <code>b</code>) which is different from the first
@@ -362,7 +364,7 @@ PT = "H"  →  transformation for H:
                 target="_blank"
                 rel="noopener noreferrer"
               >Tomster12's Isomorph Viewer</a>.
-              And {' '}
+              And for a more precise definition, see {' '}
               <a
                 href="https://github.com/Lymm37/eye-messages/wiki/Isomorphs-%28Gap-Patterns%29"
                 target="_blank"
