@@ -32,17 +32,22 @@ a deck cipher at all) such as rotations or decimations.
 
 ## Current Implementation
 
-On page load, a constant deck cipher is generated with a sliding window of 4 swaps.
+On page load, a constant deck cipher is generated with a sliding window of 4 swaps and
+a single rotation (left cyclic shift).
 There is some additional complexity with the choice of which index the top card
 swaps with to ensure that all 26 swaps are unique.
-The constant sliding window deck cipher has the same properties as the randomly-generated
-deck cipher described below.
 
 The randomize deck button generates a deck cipher with the following properties:
 
-1. Each PT symbol maps to 4 swaps.
-2. No 2 PT symbols map to the same set of swaps.
+1. Each Plaintext (PT) symbol maps to a some transformation.
+2. No 2 PT symbols map to the same transformation.
 3. Each set of swaps always includes a change to the top card.
+
+A transformation is a certain number of left-rotations (cyclic shifts) followed
+by a certain number of swaps.
+
+The number of swaps, number of rotations, and whether the number of rotations is
+constant for each transformation is determined by the input controls.
 
 Encipherment involves an initial deck state and reading PT symbols in order.
 
@@ -91,7 +96,5 @@ Isomorphs of length 2 are omitted. They don't seem that interesting.
 - Visual exploration of the current deck cipher:
 - - Inspecting each transformation associated with a given PT symbol
 - More configurability for ciphers:
-- - Different numbers of swaps other than 4
-- - Different transformations (e.g., rotations, swaps+rotations)
 - - Manual configuration of ciphers
 
