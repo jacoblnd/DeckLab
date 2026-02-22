@@ -4,6 +4,7 @@
   import DeckView from './components/DeckView.svelte';
   import MultiDeckView from './components/MultiDeckView.svelte';
   import IsomorphList from './components/IsomorphList.svelte';
+  import PlaintextOutput from './components/PlaintextOutput.svelte';
   import CipherInspector from './components/CipherInspector.svelte';
   import { encipher } from './lib/cipher/deck';
   import { generateCipherMapping, generateSlidingWindowMapping } from './lib/cipher/generate';
@@ -21,6 +22,13 @@
   let swapCount = $state(4);
   let rotationMax = $state(1);
   let rotationConstant = $state(true);
+
+  let filteredPlaintext = $derived(
+    [...plaintext]
+      .filter(c => { const u = c.toUpperCase(); return u >= 'A' && u <= 'Z'; })
+      .map(c => c.toUpperCase())
+      .join('')
+  );
 
   let result = $derived(encipher(plaintext, mapping));
   let isomorphs = $derived(findIsomorphs(result.ciphertext));
@@ -81,6 +89,7 @@
       </label>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
+    <PlaintextOutput {filteredPlaintext} highlight={ciphertextHighlight} />
     <CiphertextOutput ciphertext={result.ciphertext} highlight={ciphertextHighlight} />
     <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} {showAnimations} />
     {#if showIsomorphs}
@@ -93,7 +102,7 @@
     {/if}
   </main>
   <div class="right-panel">
-    <MultiDeckView steps={result.steps} {showHighlights} />
+    <MultiDeckView steps={result.steps} {showHighlights} highlight={ciphertextHighlight} plaintextChars={filteredPlaintext} />
   </div>
 </div>
 

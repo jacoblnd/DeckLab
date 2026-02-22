@@ -72,8 +72,8 @@ export function countPatternOccurrences(isomorphs: Isomorph[]): Map<string, numb
 }
 
 /**
- * Returns a new array of isomorphs sorted by descending occurrence count,
- * then descending interestingness, then descending pattern length, then
+ * Returns a new array of isomorphs sorted by descending interestingness,
+ * then descending occurrence count, then descending pattern length, then
  * ascending startA. Pass patternCounts from countPatternOccurrences; omit
  * to sort by interestingness alone (count treated as 0 for all).
  */
@@ -82,10 +82,10 @@ export function sortByInterestingness(
   patternCounts: Map<string, number> = new Map()
 ): Isomorph[] {
   return [...isomorphs].sort((a, b) => {
-    const dc = (patternCounts.get(b.pattern) ?? 0) - (patternCounts.get(a.pattern) ?? 0);
-    if (dc !== 0) return dc;
     const di = isomorphInterestingness(b.pattern) - isomorphInterestingness(a.pattern);
     if (di !== 0) return di;
+    const dc = (patternCounts.get(b.pattern) ?? 0) - (patternCounts.get(a.pattern) ?? 0);
+    if (dc !== 0) return dc;
     const dl = b.pattern.length - a.pattern.length;
     if (dl !== 0) return dl;
     return a.startA - b.startA;

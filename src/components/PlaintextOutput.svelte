@@ -3,31 +3,29 @@
   const HL_B = '#56b6c2';
 
   let {
-    ciphertext,
+    filteredPlaintext,
     highlight = null,
   }: {
-    ciphertext: string;
+    filteredPlaintext: string;
     highlight: { startA: number; startB: number; length: number } | null;
   } = $props();
 </script>
 
-<div class="ciphertext-section">
-  <label for="ciphertext">Ciphertext</label>
+<div class="plaintext-output-section">
   <div
-    id="ciphertext"
-    class="ciphertext-chars"
-    data-testid="ciphertext-output"
-    aria-label="Ciphertext"
+    class="pt-chars"
+    data-testid="plaintext-output"
+    aria-label="Filtered plaintext"
     aria-readonly="true"
   >
-    {#if ciphertext.length === 0}
-      <span class="placeholder">Ciphertext appears here...</span>
+    {#if filteredPlaintext.length === 0}
+      <span class="placeholder">Filtered plaintext appears here...</span>
     {:else}
-      {#each ciphertext.split('') as char, i}
+      {#each filteredPlaintext.split('') as char, i}
         {@const inA = highlight != null && i >= highlight.startA && i < highlight.startA + highlight.length}
         {@const inB = highlight != null && i >= highlight.startB && i < highlight.startB + highlight.length}
         <span
-          class="ct-char"
+          class="pt-char"
           style:background-color={inA ? HL_A : inB ? HL_B : undefined}
           style:color={inA || inB ? '#1e1e1e' : undefined}
         >{char}</span>
@@ -37,17 +35,13 @@
 </div>
 
 <style>
-  .ciphertext-section {
+  .plaintext-output-section {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
   }
 
-  label {
-    font-weight: 600;
-  }
-
-  .ciphertext-chars {
+  .pt-chars {
     font-family: monospace;
     font-size: 1rem;
     padding: 0.5rem;
@@ -59,7 +53,7 @@
     border-radius: 4px;
   }
 
-  .ct-char {
+  .pt-char {
     border-radius: 2px;
   }
 
