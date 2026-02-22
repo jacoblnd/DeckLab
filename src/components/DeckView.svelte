@@ -10,7 +10,7 @@
     '#c678dd', // swap 5  — purple
     '#56b6c2', // swap 6  — cyan
     '#d19a66', // swap 7  — orange
-    '#e06c75', // swap 8  — red (recycled, visually distinct by position)
+    '#e96eb0', // swap 8  — hot pink
     '#be5046', // swap 9  — dark red
     '#528bff', // swap 10 — bright blue
     '#7ec8a4', // swap 11 — mint

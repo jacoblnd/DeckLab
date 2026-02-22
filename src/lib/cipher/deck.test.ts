@@ -261,9 +261,9 @@ describe('generateSlidingWindowMapping', () => {
     }
   });
 
-  it('every transformation has rotation 0', () => {
+  it('every transformation has rotation 1', () => {
     for (const t of Object.values(mapping)) {
-      expect(t.rotation).toBe(0);
+      expect(t.rotation).toBe(1);
     }
   });
 

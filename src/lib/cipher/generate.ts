@@ -82,7 +82,7 @@ export function generateSlidingWindowMapping(): CipherMapping {
         [remaining[2], remaining[3]],
         [remaining[4], remaining[5]],
       ],
-      rotation: 0,
+      rotation: 1,
     };
   }
 
