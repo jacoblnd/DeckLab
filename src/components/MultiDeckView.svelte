@@ -36,6 +36,7 @@
 <div class="multi-deck" data-testid="multi-deck">
   <div class="column">
     <div class="col-label">—</div>
+    <div class="col-rotation"></div>
     {#each initialDeck as letter}
       <div class="mini-card">{letter}</div>
     {/each}
@@ -44,9 +45,7 @@
     {@const swapPairMap = buildSwapPairMap(step.transformation)}
     <div class="column">
       <div class="col-label">{step.ciphertextChar}</div>
-      {#if step.transformation.rotation > 0}
-        <div class="col-rotation">↺{step.transformation.rotation}</div>
-      {/if}
+      <div class="col-rotation">{step.transformation.rotation > 0 ? `↺${step.transformation.rotation}` : ''}</div>
       {#each step.deck as letter, i}
         {@const pair = showHighlights ? swapPairMap[i] : null}
         <div
@@ -88,6 +87,8 @@
   .col-rotation {
     font-family: monospace;
     font-size: 0.7rem;
+    line-height: 1;
+    min-height: 0.7rem;
     color: #abb2bf;
     margin-bottom: 0.1rem;
   }
