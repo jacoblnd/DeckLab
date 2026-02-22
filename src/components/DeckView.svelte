@@ -1,5 +1,6 @@
 <script lang="ts">
   import Card from './Card.svelte';
+  import { flip } from 'svelte/animate';
   import type { Transformation } from '../lib/cipher/deck';
 
   const SWAP_COLORS = [
@@ -18,10 +19,11 @@
     '#a0c8f0', // swap 13 — light blue
   ];
 
-  let { deck, lastTransformation, showHighlights }: {
+  let { deck, lastTransformation, showHighlights, showAnimations }: {
     deck: string[];
     lastTransformation: Transformation | null;
     showHighlights: boolean;
+    showAnimations: boolean;
   } = $props();
 
   // Map each deck position to its swap pair index, or null if not swapped.
@@ -57,8 +59,10 @@
     </div>
   {/if}
   <div class="deck" data-testid="deck">
-    {#each deck as letter, i}
-      <Card {letter} swapPair={showHighlights ? swapPairMap[i] : null} />
+    {#each deck as letter, i (letter)}
+      <div class="card-slot" animate:flip={{ duration: showAnimations ? 500 : 0 }}>
+        <Card {letter} swapPair={showHighlights ? swapPairMap[i] : null} />
+      </div>
     {/each}
   </div>
 </div>
@@ -127,5 +131,9 @@
     gap: 0.4rem;
     justify-content: center;
     padding: 0.5rem 0;
+  }
+
+  .card-slot {
+    display: inline-flex;
   }
 </style>

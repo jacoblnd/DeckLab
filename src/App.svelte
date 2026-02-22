@@ -15,6 +15,7 @@
   let showHighlights = $state(true);
   let showIsomorphs = $state(false);
   let showCipherInspector = $state(false);
+  let showAnimations = $state(false);
   let selectedIsomorph = $state<Isomorph | null>(null);
 
   let swapCount = $state(4);
@@ -74,10 +75,14 @@
         <input type="checkbox" bind:checked={showIsomorphs} />
         Show isomorphs
       </label>
+      <label class="highlight-toggle">
+        <input type="checkbox" bind:checked={showAnimations} />
+        Animate deck
+      </label>
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
     <CiphertextOutput ciphertext={result.ciphertext} highlight={ciphertextHighlight} />
-    <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} />
+    <DeckView deck={result.deck} lastTransformation={result.lastTransformation} {showHighlights} {showAnimations} />
     {#if showIsomorphs}
       <IsomorphList
         {isomorphs}
