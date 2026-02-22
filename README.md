@@ -93,8 +93,7 @@ Isomorphs of length 2 are omitted. They don't seem that interesting.
 
 ## Future Feature Thoughts
 
-- Visual exploration of the current deck cipher:
-- - Inspecting each transformation associated with a given PT symbol
 - More configurability for ciphers:
 - - Manual configuration of ciphers
+- Meaningful statistic calculation and visualization
 
