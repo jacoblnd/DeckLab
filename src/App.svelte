@@ -16,8 +16,8 @@
   let selectedIsomorph = $state<Isomorph | null>(null);
 
   let swapCount = $state(4);
-  let rotationMax = $state(0);
-  let rotationConstant = $state(false);
+  let rotationMax = $state(1);
+  let rotationConstant = $state(true);
 
   let result = $derived(encipher(plaintext, mapping));
   let isomorphs = $derived(findIsomorphs(result.ciphertext));
