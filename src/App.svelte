@@ -4,6 +4,7 @@
   import DeckView from './components/DeckView.svelte';
   import MultiDeckView from './components/MultiDeckView.svelte';
   import IsomorphList from './components/IsomorphList.svelte';
+  import CipherInspector from './components/CipherInspector.svelte';
   import { encipher } from './lib/cipher/deck';
   import { generateCipherMapping, generateSlidingWindowMapping } from './lib/cipher/generate';
   import { findIsomorphs } from './lib/cipher/isomorph';
@@ -13,6 +14,7 @@
   let plaintext = $state('');
   let showHighlights = $state(true);
   let showIsomorphs = $state(false);
+  let showCipherInspector = $state(false);
   let selectedIsomorph = $state<Isomorph | null>(null);
 
   let swapCount = $state(4);
@@ -51,6 +53,7 @@
     <h1>DeckLab</h1>
     <div class="controls">
       <button onclick={randomizeMapping}>Randomize Cipher</button>
+      <button onclick={() => showCipherInspector = true}>Inspect Cipher</button>
       <label class="control-label">
         Swaps:
         <input type="number" class="num-input" min={rotationMax === 0 ? 2 : 1} max="13" bind:value={swapCount} />
@@ -88,6 +91,10 @@
     <MultiDeckView steps={result.steps} {showHighlights} />
   </div>
 </div>
+
+{#if showCipherInspector}
+  <CipherInspector {mapping} onclose={() => showCipherInspector = false} />
+{/if}
 
 <style>
   .app-layout {
