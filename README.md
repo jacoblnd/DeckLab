@@ -25,10 +25,9 @@ The properties of the cipher described below were chosen specifically to meet th
 
 One major difference in the implementation of this deck cipher is that it only supports 26 Ciphertext
 symbols whereas any true Eye Puzzle encipherment mechanism would need to support 83.
-Additionally, the shuffle algorithms are currently simplistic in that they only support a limited number
-of swaps.
+Additionally, the only transformations supported are swaps, rotations (cyclic shifts) or a combination.
 Other shuffle transformations may exist in the true Eye Puzzle encipherment mechanism (if it is represented by
-a deck cipher at all) such as rotations or decimations.
+a deck cipher at all).
 
 ## Current Implementation
 
