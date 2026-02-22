@@ -216,6 +216,16 @@ describe('generateCipherMapping', () => {
     }
   });
 
+  it('throws for swapCount=1 with rotationMax=0 (only 25 possible keys)', () => {
+    expect(() => generateCipherMapping(42, { swapCount: 1, rotationMax: 0, rotationConstant: false }))
+      .toThrow();
+  });
+
+  it('does not throw for swapCount=1 with rotationMax > 0', () => {
+    expect(() => generateCipherMapping(42, { swapCount: 1, rotationMax: 1, rotationConstant: false }))
+      .not.toThrow();
+  });
+
   it('treats same-swaps/different-rotation transformations as distinct', () => {
     // Two configs with same seed but different constant rotations — all 26 transformations unique
     const m1 = generateCipherMapping(42, { swapCount: 4, rotationMax: 3, rotationConstant: true });

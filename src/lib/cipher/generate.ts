@@ -132,8 +132,18 @@ export function transformationKey(t: Transformation): string {
 /**
  * Generate a complete cipher mapping: 26 PT symbols (A–Z) each mapped
  * to a unique transformation. Uses a seeded PRNG for reproducibility.
+ *
+ * Throws if the configuration cannot produce 26 unique transformations.
+ * The only currently reachable invalid combination is swapCount=1 with
+ * rotationMax=0, which yields only 25 possible keys.
  */
 export function generateCipherMapping(seed: number, config: CipherConfig): CipherMapping {
+  if (config.swapCount === 1 && config.rotationMax === 0) {
+    throw new Error(
+      'Invalid cipher config: swapCount=1 with rotationMax=0 can only produce 25 unique ' +
+      'transformations, but 26 are required. Increase swapCount to at least 2, or set rotationMax > 0.'
+    );
+  }
   const rng = createRng(seed);
   const mapping: CipherMapping = {};
   const usedKeys = new Set<string>();

@@ -33,6 +33,13 @@
     selectedIsomorph = null;
   });
 
+  // When rotationMax drops to 0, swapCount=1 would be invalid — clamp to 2
+  $effect(() => {
+    if (rotationMax === 0 && swapCount < 2) {
+      swapCount = 2;
+    }
+  });
+
   function randomizeMapping() {
     const seed = Math.floor(Math.random() * 2 ** 32);
     mapping = generateCipherMapping(seed, { swapCount, rotationMax, rotationConstant });
@@ -46,7 +53,7 @@
       <button onclick={randomizeMapping}>Randomize Cipher</button>
       <label class="control-label">
         Swaps:
-        <input type="number" class="num-input" min="1" max="13" bind:value={swapCount} />
+        <input type="number" class="num-input" min={rotationMax === 0 ? 2 : 1} max="13" bind:value={swapCount} />
       </label>
       <label class="control-label">
         Rotations:
@@ -54,7 +61,7 @@
       </label>
       <label class="control-label" class:disabled={rotationMax === 0}>
         <input type="checkbox" bind:checked={rotationConstant} disabled={rotationMax === 0} />
-        Constant
+        Constant Rotations
       </label>
       <label class="highlight-toggle">
         <input type="checkbox" bind:checked={showHighlights} />
