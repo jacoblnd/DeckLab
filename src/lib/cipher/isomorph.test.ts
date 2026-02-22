@@ -169,12 +169,12 @@ describe('sortByInterestingness', () => {
     expect(sorted[1]).toEqual(later);
   });
 
-  it('sorts by descending count when patternCounts is provided, before interestingness', () => {
-    // 'aa' density 1.0 > 'a.a' density 0.667, but if 'a.a' has count 3 and 'aa' has count 2,
-    // 'a.a' should rank first because count is the primary key
+  it('breaks equal-interestingness ties by descending count when patternCounts is provided', () => {
+    // Both 'aa' and 'bb' have density 1.0; 'bb' has count 3 vs 'aa' count 1,
+    // so 'bb' should rank first because count is the secondary key
     const lo: Isomorph = { pattern: 'aa', startA: 0, startB: 5 };
-    const hi: Isomorph = { pattern: 'a.a', startA: 0, startB: 10 };
-    const counts = new Map([['aa', 2], ['a.a', 3]]);
+    const hi: Isomorph = { pattern: 'bb', startA: 0, startB: 10 };
+    const counts = new Map([['aa', 1], ['bb', 3]]);
     const sorted = sortByInterestingness([lo, hi], counts);
     expect(sorted[0]).toEqual(hi);
     expect(sorted[1]).toEqual(lo);
