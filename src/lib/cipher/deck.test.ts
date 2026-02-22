@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { createInitialDeck, applyTransformation, encipherStep, encipher } from './deck';
 import type { Transformation, CipherMapping, CipherStep } from './deck';
 import { generateCipherMapping, generateSlidingWindowMapping, transformationKey } from './generate';
+import type { CipherConfig } from './generate';
 import { createRng } from './prng';
+
+const DEFAULT_CONFIG: CipherConfig = { swapCount: 4, rotationMax: 0, rotationConstant: false };
 
 // ── PRNG ──
 
@@ -48,9 +51,12 @@ describe('createInitialDeck', () => {
 // ── applyTransformation ──
 
 describe('applyTransformation', () => {
-  it('swaps the correct positions', () => {
+  it('swaps the correct positions (no rotation)', () => {
     const deck = createInitialDeck();
-    const t: Transformation = [[0, 1], [2, 3], [4, 5], [6, 7]];
+    const t: Transformation = {
+      swaps: [[0, 1], [2, 3], [4, 5], [6, 7]],
+      rotation: 0,
+    };
     const result = applyTransformation(deck, t);
     expect(result[0]).toBe('B');
     expect(result[1]).toBe('A');
@@ -67,15 +73,45 @@ describe('applyTransformation', () => {
   it('does not mutate the original deck', () => {
     const deck = createInitialDeck();
     const original = [...deck];
-    applyTransformation(deck, [[0, 25], [1, 24], [2, 23], [3, 22]]);
+    applyTransformation(deck, { swaps: [[0, 25], [1, 24], [2, 23], [3, 22]], rotation: 0 });
     expect(deck).toEqual(original);
+  });
+
+  it('applies rotation by shifting cards left by N positions', () => {
+    const deck = createInitialDeck(); // [A, B, C, D, ...]
+    const t: Transformation = { swaps: [[0, 1]], rotation: 2 };
+    const result = applyTransformation(deck, t);
+    // After rotation by 2: [C, D, E, ..., A, B]
+    // Then swap positions 0 and 1: [D, C, E, ..., A, B]
+    expect(result[0]).toBe('D'); // was C (from rotation), swapped with D
+    expect(result[1]).toBe('C'); // was D (from rotation), swapped with C
+    expect(result[2]).toBe('E'); // unchanged by swap
+  });
+
+  it('applies rotation of 0 as a no-op', () => {
+    const deck = createInitialDeck();
+    const t: Transformation = { swaps: [[0, 1]], rotation: 0 };
+    const result = applyTransformation(deck, t);
+    expect(result[0]).toBe('B');
+    expect(result[1]).toBe('A');
+    expect(result[2]).toBe('C');
+  });
+
+  it('applies rotation before swaps', () => {
+    // Deck: [A, B, C, D, E, ...]. Rotation 1 → [B, C, D, E, ...]. Swap (0,1) → [C, B, D, E, ...]
+    const deck = createInitialDeck();
+    const t: Transformation = { swaps: [[0, 1]], rotation: 1 };
+    const result = applyTransformation(deck, t);
+    expect(result[0]).toBe('C');
+    expect(result[1]).toBe('B');
+    expect(result[2]).toBe('D');
   });
 });
 
 // ── Cipher generation ──
 
 describe('generateCipherMapping', () => {
-  const mapping = generateCipherMapping(42);
+  const mapping = generateCipherMapping(42, DEFAULT_CONFIG);
 
   it('produces a mapping for all 26 letters', () => {
     for (let i = 0; i < 26; i++) {
@@ -86,13 +122,13 @@ describe('generateCipherMapping', () => {
 
   it('each transformation has exactly 4 swaps', () => {
     for (const t of Object.values(mapping)) {
-      expect(t).toHaveLength(4);
+      expect(t.swaps).toHaveLength(4);
     }
   });
 
   it('each transformation uses 8 distinct positions', () => {
     for (const t of Object.values(mapping)) {
-      const positions = t.flat();
+      const positions = t.swaps.flat();
       expect(positions).toHaveLength(8);
       expect(new Set(positions).size).toBe(8);
     }
@@ -102,45 +138,99 @@ describe('generateCipherMapping', () => {
     // Verify across many seeds that position 0 is always the first element
     // of the first swap — this confirms it's built in, not rejection-sampled.
     for (let seed = 0; seed < 50; seed++) {
-      const m = generateCipherMapping(seed);
+      const m = generateCipherMapping(seed, DEFAULT_CONFIG);
       for (const t of Object.values(m)) {
-        const positions = t.flat();
+        const positions = t.swaps.flat();
         expect(positions).toContain(0);
-        // Position 0 should always be positions[0] (first element of first swap)
-        expect(t[0][0]).toBe(0);
+        expect(t.swaps[0][0]).toBe(0);
       }
     }
   });
 
   it('no two PT symbols share the same transformation (normalized comparison)', () => {
-    // Normalize each transformation: sort within swaps, then sort swaps,
-    // so reorderings of the same set of swaps are detected as duplicates.
     function normalizeKey(t: Transformation): string {
-      return t
+      return t.swaps
         .map(([a, b]) => (a < b ? [a, b] : [b, a]))
         .sort((x, y) => x[0] - y[0] || x[1] - y[1])
         .map(([a, b]) => `${a},${b}`)
         .join(';');
     }
 
-    // Check across multiple seeds
     for (let seed = 0; seed < 20; seed++) {
-      const m = generateCipherMapping(seed);
+      const m = generateCipherMapping(seed, DEFAULT_CONFIG);
       const keys = Object.values(m).map(normalizeKey);
       expect(new Set(keys).size).toBe(26);
     }
   });
 
   it('same seed produces the same mapping', () => {
-    const a = generateCipherMapping(99);
-    const b = generateCipherMapping(99);
+    const a = generateCipherMapping(99, DEFAULT_CONFIG);
+    const b = generateCipherMapping(99, DEFAULT_CONFIG);
     expect(a).toEqual(b);
   });
 
   it('different seeds produce different mappings', () => {
-    const a = generateCipherMapping(1);
-    const b = generateCipherMapping(2);
+    const a = generateCipherMapping(1, DEFAULT_CONFIG);
+    const b = generateCipherMapping(2, DEFAULT_CONFIG);
     expect(a).not.toEqual(b);
+  });
+
+  it('respects a custom swapCount of 2', () => {
+    const m = generateCipherMapping(42, { swapCount: 2, rotationMax: 0, rotationConstant: false });
+    for (const t of Object.values(m)) {
+      expect(t.swaps).toHaveLength(2);
+      expect(t.swaps.flat()).toHaveLength(4);
+      expect(new Set(t.swaps.flat()).size).toBe(4);
+    }
+  });
+
+  it('respects a custom swapCount of 2', () => {
+    const m = generateCipherMapping(42, { swapCount: 2, rotationMax: 0, rotationConstant: false });
+    for (const t of Object.values(m)) {
+      expect(t.swaps).toHaveLength(2);
+      expect(t.swaps.flat()).toHaveLength(4);
+      expect(new Set(t.swaps.flat()).size).toBe(4);
+      expect(t.swaps[0][0]).toBe(0); // position 0 must be in a swap when rotation === 0
+    }
+  });
+
+  it('applies constant rotation when rotationConstant is true', () => {
+    const m = generateCipherMapping(42, { swapCount: 4, rotationMax: 5, rotationConstant: true });
+    for (const t of Object.values(m)) {
+      expect(t.rotation).toBe(5);
+    }
+  });
+
+  it('applies random rotation within [1, rotationMax] when rotationConstant is false', () => {
+    const m = generateCipherMapping(42, { swapCount: 4, rotationMax: 10, rotationConstant: false });
+    for (const t of Object.values(m)) {
+      expect(t.rotation).toBeGreaterThanOrEqual(1);
+      expect(t.rotation).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('produces rotation 0 for all transformations when rotationMax is 0', () => {
+    const m = generateCipherMapping(42, { swapCount: 4, rotationMax: 0, rotationConstant: false });
+    for (const t of Object.values(m)) {
+      expect(t.rotation).toBe(0);
+    }
+  });
+
+  it('throws for swapCount=1 with rotationMax=0 (only 25 possible keys)', () => {
+    expect(() => generateCipherMapping(42, { swapCount: 1, rotationMax: 0, rotationConstant: false }))
+      .toThrow();
+  });
+
+  it('does not throw for swapCount=1 with rotationMax > 0', () => {
+    expect(() => generateCipherMapping(42, { swapCount: 1, rotationMax: 1, rotationConstant: false }))
+      .not.toThrow();
+  });
+
+  it('treats same-swaps/different-rotation transformations as distinct', () => {
+    // Two configs with same seed but different constant rotations — all 26 transformations unique
+    const m1 = generateCipherMapping(42, { swapCount: 4, rotationMax: 3, rotationConstant: true });
+    const keys = new Set(Object.values(m1).map(transformationKey));
+    expect(keys.size).toBe(26);
   });
 });
 
@@ -158,8 +248,8 @@ describe('generateSlidingWindowMapping', () => {
 
   it('each transformation has exactly 4 swaps with 8 distinct positions', () => {
     for (const t of Object.values(mapping)) {
-      expect(t).toHaveLength(4);
-      const positions = t.flat();
+      expect(t.swaps).toHaveLength(4);
+      const positions = t.swaps.flat();
       expect(positions).toHaveLength(8);
       expect(new Set(positions).size).toBe(8);
     }
@@ -167,7 +257,13 @@ describe('generateSlidingWindowMapping', () => {
 
   it('every transformation includes position 0', () => {
     for (const t of Object.values(mapping)) {
-      expect(t[0][0]).toBe(0);
+      expect(t.swaps[0][0]).toBe(0);
+    }
+  });
+
+  it('every transformation has rotation 1', () => {
+    for (const t of Object.values(mapping)) {
+      expect(t.rotation).toBe(1);
     }
   });
 
@@ -178,10 +274,10 @@ describe('generateSlidingWindowMapping', () => {
 
   it('position 0 partner rotates through the window per letter', () => {
     // A (i=0): partner = window[0] = 1, B (i=1): partner = window[1] = 3
-    expect(mapping['A'][0]).toEqual([0, 1]);
-    expect(mapping['B'][0]).toEqual([0, 3]);
+    expect(mapping['A'].swaps[0]).toEqual([0, 1]);
+    expect(mapping['B'].swaps[0]).toEqual([0, 3]);
     // H (i=7): partner = window[0] again (7 % 7 = 0), but window starts at 8
-    expect(mapping['H'][0]).toEqual([0, 8]);
+    expect(mapping['H'].swaps[0]).toEqual([0, 8]);
   });
 
   it('is deterministic — same result every time', () => {
@@ -192,7 +288,7 @@ describe('generateSlidingWindowMapping', () => {
 
   it('all non-zero positions are in range 1–25', () => {
     for (const t of Object.values(mapping)) {
-      for (const [a, b] of t) {
+      for (const [a, b] of t.swaps) {
         if (a !== 0) {
           expect(a).toBeGreaterThanOrEqual(1);
           expect(a).toBeLessThanOrEqual(25);
@@ -209,7 +305,7 @@ describe('generateSlidingWindowMapping', () => {
 // ── Encipherment ──
 
 describe('encipherStep', () => {
-  const mapping = generateCipherMapping(42);
+  const mapping = generateCipherMapping(42, DEFAULT_CONFIG);
 
   it('changes the top card after a step', () => {
     const deck = createInitialDeck();
@@ -225,7 +321,7 @@ describe('encipherStep', () => {
 });
 
 describe('encipher', () => {
-  const mapping = generateCipherMapping(42);
+  const mapping = generateCipherMapping(42, DEFAULT_CONFIG);
 
   it('enciphers a plaintext string', () => {
     const result = encipher('hello', mapping);
@@ -255,7 +351,7 @@ describe('encipher', () => {
   });
 
   it('same plaintext + same seed = same ciphertext', () => {
-    const m = generateCipherMapping(77);
+    const m = generateCipherMapping(77, DEFAULT_CONFIG);
     const a = encipher('test', m);
     const b = encipher('test', m);
     expect(a.ciphertext).toBe(b.ciphertext);
@@ -263,8 +359,8 @@ describe('encipher', () => {
   });
 
   it('same plaintext + different seed = different ciphertext', () => {
-    const m1 = generateCipherMapping(1);
-    const m2 = generateCipherMapping(2);
+    const m1 = generateCipherMapping(1, DEFAULT_CONFIG);
+    const m2 = generateCipherMapping(2, DEFAULT_CONFIG);
     const a = encipher('test', m1);
     const b = encipher('test', m2);
     expect(a.ciphertext).not.toBe(b.ciphertext);
