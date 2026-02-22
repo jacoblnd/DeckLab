@@ -1,6 +1,9 @@
 export type DeckState = string[];
 export type Swap = [number, number];
-export type Transformation = [Swap, Swap, Swap, Swap];
+export type Transformation = {
+  swaps: Swap[];    // 1–13 swap pairs
+  rotation: number; // 0 = no rotation; N = cyclic shift by N positions (applied before swaps)
+};
 export type CipherMapping = Record<string, Transformation>;
 export type CipherStep = {
   deck: DeckState;
@@ -13,8 +16,12 @@ export function createInitialDeck(): DeckState {
 }
 
 export function applyTransformation(deck: DeckState, transformation: Transformation): DeckState {
-  const newDeck = [...deck];
-  for (const [i, j] of transformation) {
+  let newDeck = [...deck];
+  if (transformation.rotation > 0) {
+    const n = transformation.rotation;
+    newDeck = [...newDeck.slice(n), ...newDeck.slice(0, n)];
+  }
+  for (const [i, j] of transformation.swaps) {
     [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
   }
   return newDeck;

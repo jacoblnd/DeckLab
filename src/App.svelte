@@ -15,6 +15,10 @@
   let showIsomorphs = $state(false);
   let selectedIsomorph = $state<Isomorph | null>(null);
 
+  let swapCount = $state(4);
+  let rotationMax = $state(0);
+  let rotationConstant = $state(false);
+
   let result = $derived(encipher(plaintext, mapping));
   let isomorphs = $derived(findIsomorphs(result.ciphertext));
   let ciphertextHighlight = $derived(
@@ -31,7 +35,7 @@
 
   function randomizeMapping() {
     const seed = Math.floor(Math.random() * 2 ** 32);
-    mapping = generateCipherMapping(seed);
+    mapping = generateCipherMapping(seed, { swapCount, rotationMax, rotationConstant });
   }
 </script>
 
@@ -40,6 +44,18 @@
     <h1>DeckLab</h1>
     <div class="controls">
       <button onclick={randomizeMapping}>Randomize Cipher</button>
+      <label class="control-label">
+        Swaps:
+        <input type="number" class="num-input" min="1" max="13" bind:value={swapCount} />
+      </label>
+      <label class="control-label">
+        Rotations:
+        <input type="number" class="num-input" min="0" max="25" bind:value={rotationMax} />
+      </label>
+      <label class="control-label" class:disabled={rotationMax === 0}>
+        <input type="checkbox" bind:checked={rotationConstant} disabled={rotationMax === 0} />
+        Constant
+      </label>
       <label class="highlight-toggle">
         <input type="checkbox" bind:checked={showHighlights} />
         Show swap highlights
@@ -111,6 +127,34 @@
     font-size: 0.9rem;
     cursor: pointer;
     user-select: none;
+  }
+
+  .control-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    user-select: none;
+  }
+
+  .control-label.disabled {
+    opacity: 0.4;
+  }
+
+  .num-input {
+    width: 3rem;
+    padding: 0.25rem 0.3rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: transparent;
+    color: inherit;
+    text-align: center;
+  }
+
+  .num-input:focus {
+    outline: none;
+    border-color: #888;
   }
 
   button {
