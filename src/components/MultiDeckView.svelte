@@ -193,10 +193,8 @@
     {/each}
   {/if}
 
-  <!-- SVG overlay: draws trace polylines above all columns. Only shown when
-       traces are active and no isomorph highlight is selected (isomorph brackets
-       shift column positions, making the geometry unreliable). -->
-  {#if cardTraces.size > 0 && !highlight}
+  <!-- SVG overlay: draws trace polylines above all columns when any trace is active. -->
+  {#if cardTraces.size > 0}
     <svg class="trace-overlay" xmlns="http://www.w3.org/2000/svg">
       {#each [...cardTraces.entries()] as [card, trace]}
         {@const pts = tracePoints(card, trace)}
