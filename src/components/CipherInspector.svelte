@@ -246,8 +246,6 @@
 
   .col-pt  { width: 2rem; }
   .col-rot { width: 3rem; }
-  .col-swaps { }
-
   .cell-pt {
     font-family: monospace;
     font-weight: 700;
@@ -302,10 +300,6 @@
   .heatmap-table {
     border-collapse: collapse;
     font-size: 0.75rem;
-  }
-
-  .hm-corner {
-    /* intentionally empty — occupies the top-left and top-right header cells */
   }
 
   .hm-axis-label {
