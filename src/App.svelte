@@ -13,7 +13,7 @@
   import type { Isomorph } from './lib/cipher/isomorph';
 
   type DisplayToken = { char: string; highlight: 'A' | 'B' | null };
-  type CardTrace = { startCol: number; color: string };
+  type CardTrace = { card: string; startCol: number; color: string };
 
   const PASSTHROUGH = new Set([' ', '\n', '.']);
 
@@ -31,7 +31,7 @@
   ];
 
   let mapping = $state(generateSlidingWindowMapping());
-  let cardTraces = $state<Map<string, CardTrace>>(new Map());
+  let cardTraces = $state<CardTrace[]>([]);
   let plaintext = $state('');
   let showHighlights = $state(true);
   let showIsomorphs = $state(false);
@@ -105,25 +105,28 @@
   function randomizeMapping() {
     const seed = Math.floor(Math.random() * 2 ** 32);
     mapping = generateCipherMapping(seed, { swapCount, rotationMax, rotationConstant });
-    cardTraces = new Map();
+    cardTraces = [];
   }
 
   function toggleCardTrace(card: string, displayCol: number) {
-    const next = new Map(cardTraces);
-    if (next.has(card)) {
-      next.delete(card);
+    const hitIdx = cardTraces.findIndex(t =>
+      t.card === card &&
+      displayCol >= t.startCol &&
+      displayCol < t.startCol + TRACE_WINDOW
+    );
+    if (hitIdx !== -1) {
+      cardTraces = cardTraces.filter((_, i) => i !== hitIdx);
     } else {
-      const usedColors = new Set([...next.values()].map(t => t.color));
+      const usedColors = new Set(cardTraces.map(t => t.color));
       const color =
         TRACE_COLORS.find(c => !usedColors.has(c)) ??
-        TRACE_COLORS[next.size % TRACE_COLORS.length];
-      next.set(card, { startCol: displayCol, color });
+        TRACE_COLORS[cardTraces.length % TRACE_COLORS.length];
+      cardTraces = [...cardTraces, { card, startCol: displayCol, color }];
     }
-    cardTraces = next;
   }
 
   function clearAllTraces() {
-    cardTraces = new Map();
+    cardTraces = [];
   }
 </script>
 
@@ -158,7 +161,7 @@
         <input type="checkbox" bind:checked={showAnimations} />
         Animate deck
       </label>
-      {#if cardTraces.size > 0}
+      {#if cardTraces.length > 0}
         <button onclick={clearAllTraces}>Clear traces</button>
       {/if}
     </div>

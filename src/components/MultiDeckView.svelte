@@ -18,7 +18,7 @@
     '#a0c8f0', // swap 13 — light blue
   ];
 
-  type CardTrace = { startCol: number; color: string };
+  type CardTrace = { card: string; startCol: number; color: string };
 
   const initialDeck = createInitialDeck();
 
@@ -27,7 +27,7 @@
     showHighlights: boolean;
     highlight: { startA: number; startB: number; length: number } | null;
     plaintextChars: string;
-    cardTraces: Map<string, CardTrace>;
+    cardTraces: CardTrace[];
     traceWindow: number;
     ontoggle: (card: string, displayCol: number) => void;
   } = $props();
@@ -91,21 +91,24 @@
     return cardGeometry.baseY + deckPos * cardGeometry.cardStep;
   }
 
-  // Returns the trace color if this card is traced in this display column, else null.
+  // Returns the trace color if any active trace covers this card at this display column.
   function traceColorForCard(card: string, displayCol: number): string | null {
-    const trace = cardTraces.get(card);
-    if (!trace) return null;
-    return (displayCol >= trace.startCol && displayCol < trace.startCol + traceWindow)
-      ? trace.color
-      : null;
+    for (const trace of cardTraces) {
+      if (trace.card === card &&
+          displayCol >= trace.startCol &&
+          displayCol < trace.startCol + traceWindow) {
+        return trace.color;
+      }
+    }
+    return null;
   }
 
   // SVG polyline points string for a single trace (returns '' if fewer than 2 points).
-  function tracePoints(card: string, trace: CardTrace): string {
+  function tracePoints(trace: CardTrace): string {
     const endCol = Math.min(trace.startCol + traceWindow - 1, steps.length);
     const pts: string[] = [];
     for (let col = trace.startCol; col <= endCol; col++) {
-      const deckPos = deckAtCol(col).indexOf(card);
+      const deckPos = deckAtCol(col).indexOf(trace.card);
       const x = colPositions[col];
       if (x == null || deckPos === -1) continue;
       const y = cardCenterY(deckPos);
@@ -194,10 +197,10 @@
   {/if}
 
   <!-- SVG overlay: draws trace polylines above all columns when any trace is active. -->
-  {#if cardTraces.size > 0}
+  {#if cardTraces.length > 0}
     <svg class="trace-overlay" xmlns="http://www.w3.org/2000/svg">
-      {#each [...cardTraces.entries()] as [card, trace]}
-        {@const pts = tracePoints(card, trace)}
+      {#each cardTraces as trace}
+        {@const pts = tracePoints(trace)}
         {#if pts}
           <polyline
             points={pts}
