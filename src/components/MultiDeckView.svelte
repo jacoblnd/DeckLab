@@ -18,14 +18,56 @@
     '#a0c8f0', // swap 13 — light blue
   ];
 
+  type CardTrace = { startCol: number; color: string };
+
   const initialDeck = createInitialDeck();
 
-  let { steps, showHighlights, highlight = null, plaintextChars }: {
+  let { steps, showHighlights, highlight = null, plaintextChars, cardTraces, traceWindow, ontoggle }: {
     steps: CipherStep[];
     showHighlights: boolean;
     highlight: { startA: number; startB: number; length: number } | null;
     plaintextChars: string;
+    cardTraces: Map<string, CardTrace>;
+    traceWindow: number;
+    ontoggle: (card: string, displayCol: number) => void;
   } = $props();
+
+  // DOM refs for the container, each column div, and the first two cards in the
+  // initial column (used to measure baseY and cardStep without CSS constant guesses).
+  let containerEl       = $state<HTMLElement | null>(null);
+  let colEls            = $state<(HTMLElement | null)[]>([]);
+  let initialColCardEls = $state<(HTMLElement | null)[]>([]);
+
+  // X center of each display column in container coordinates.
+  // colPositions[0] = initial "—" column, colPositions[i+1] = steps[i].
+  // Recomputes whenever any colEls[i] or containerEl changes (via bind:this).
+  let colPositions = $derived.by(() => {
+    if (!containerEl) return [];
+    const containerRect = containerEl.getBoundingClientRect();
+    return Array.from({ length: steps.length + 1 }, (_, i) => {
+      const el = colEls[i];
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return rect.left + rect.width / 2 - containerRect.left;
+    });
+  });
+
+  // Y geometry measured from the first two mini-cards in the initial column:
+  //   baseY    — Y center of the card at deck position 0 (in container coordinates)
+  //   cardStep — center-to-center distance between consecutive cards
+  // This avoids CSS constant approximations (line-height, box-sizing, etc.).
+  let cardGeometry = $derived.by(() => {
+    const first  = initialColCardEls[0];
+    const second = initialColCardEls[1];
+    if (!first || !second || !containerEl) return null;
+    const containerTop = containerEl.getBoundingClientRect().top;
+    const firstRect    = first.getBoundingClientRect();
+    const secondRect   = second.getBoundingClientRect();
+    return {
+      baseY:    firstRect.top  - containerTop + firstRect.height / 2,
+      cardStep: secondRect.top - firstRect.top,
+    };
+  });
 
   function buildSwapPairMap(transformation: Transformation): (number | null)[] {
     const map: (number | null)[] = new Array(26).fill(null);
@@ -36,20 +78,64 @@
     }
     return map;
   }
+
+  // Deck state at display column col (0 = initial A-Z, j = steps[j-1].deck).
+  function deckAtCol(col: number): string[] {
+    return col === 0 ? initialDeck : steps[col - 1].deck;
+  }
+
+  // Y center (px, relative to container top) of the card at deckPos.
+  // All columns share the same vertical card layout, so no column index is needed.
+  function cardCenterY(deckPos: number): number | null {
+    if (!cardGeometry) return null;
+    return cardGeometry.baseY + deckPos * cardGeometry.cardStep;
+  }
+
+  // Returns the trace color if this card is traced in this display column, else null.
+  function traceColorForCard(card: string, displayCol: number): string | null {
+    const trace = cardTraces.get(card);
+    if (!trace) return null;
+    return (displayCol >= trace.startCol && displayCol < trace.startCol + traceWindow)
+      ? trace.color
+      : null;
+  }
+
+  // SVG polyline points string for a single trace (returns '' if fewer than 2 points).
+  function tracePoints(card: string, trace: CardTrace): string {
+    const endCol = Math.min(trace.startCol + traceWindow - 1, steps.length);
+    const pts: string[] = [];
+    for (let col = trace.startCol; col <= endCol; col++) {
+      const deckPos = deckAtCol(col).indexOf(card);
+      const x = colPositions[col];
+      if (x == null || deckPos === -1) continue;
+      const y = cardCenterY(deckPos);
+      if (y === null) continue;
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    return pts.length >= 2 ? pts.join(' ') : '';
+  }
 </script>
 
 {#snippet column(step: CipherStep, globalIdx: number)}
   {@const swapPairMap = buildSwapPairMap(step.transformation)}
-  <div class="column">
+  {@const displayCol = globalIdx + 1}
+  <div class="column" bind:this={colEls[displayCol]}>
     <div class="pt-label">{plaintextChars[globalIdx]}</div>
     <div class="col-label">{step.ciphertextChar}</div>
     <div class="col-rotation">{step.transformation.rotation > 0 ? `↺${step.transformation.rotation}` : ''}</div>
     {#each step.deck as letter, i}
       {@const pair = showHighlights ? swapPairMap[i] : null}
+      {@const traceColor = traceColorForCard(letter, displayCol)}
       <div
         class="mini-card"
         class:highlighted={pair != null}
         style:background-color={pair != null ? SWAP_COLORS[pair] : undefined}
+        style:outline={traceColor ? `2px solid ${traceColor}` : undefined}
+        style:z-index={traceColor ? 1 : undefined}
+        role="button"
+        tabindex="0"
+        onclick={() => ontoggle(letter, displayCol)}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') ontoggle(letter, displayCol); }}
       >
         {letter}
       </div>
@@ -57,13 +143,26 @@
   </div>
 {/snippet}
 
-<div class="multi-deck" data-testid="multi-deck">
-  <div class="column">
+<div class="multi-deck" data-testid="multi-deck" bind:this={containerEl}>
+  <!-- Initial "—" column (displayCol = 0) -->
+  <div class="column" bind:this={colEls[0]}>
     <div class="pt-label"></div>
     <div class="col-label">—</div>
     <div class="col-rotation"></div>
-    {#each initialDeck as letter}
-      <div class="mini-card">{letter}</div>
+    {#each initialDeck as letter, i}
+      {@const traceColor = traceColorForCard(letter, 0)}
+      <div
+        class="mini-card"
+        bind:this={initialColCardEls[i]}
+        style:outline={traceColor ? `2px solid ${traceColor}` : undefined}
+        style:z-index={traceColor ? 1 : undefined}
+        role="button"
+        tabindex="0"
+        onclick={() => ontoggle(letter, 0)}
+        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') ontoggle(letter, 0); }}
+      >
+        {letter}
+      </div>
     {/each}
   </div>
 
@@ -93,6 +192,28 @@
       {@render column(step, startB + length + i)}
     {/each}
   {/if}
+
+  <!-- SVG overlay: draws trace polylines above all columns. Only shown when
+       traces are active and no isomorph highlight is selected (isomorph brackets
+       shift column positions, making the geometry unreliable). -->
+  {#if cardTraces.size > 0 && !highlight}
+    <svg class="trace-overlay" xmlns="http://www.w3.org/2000/svg">
+      {#each [...cardTraces.entries()] as [card, trace]}
+        {@const pts = tracePoints(card, trace)}
+        {#if pts}
+          <polyline
+            points={pts}
+            stroke={trace.color}
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"
+            opacity="0.85"
+          />
+        {/if}
+      {/each}
+    </svg>
+  {/if}
 </div>
 
 <style>
@@ -101,6 +222,17 @@
     flex-direction: row;
     gap: 0.4rem;
     padding: 0.5rem;
+    position: relative; /* required for the absolutely-positioned SVG overlay */
+  }
+
+  .trace-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
   }
 
   .group-bracket {
@@ -155,6 +287,8 @@
     font-weight: 600;
     font-family: monospace;
     user-select: none;
+    cursor: pointer;
+    position: relative; /* required for z-index on outlined traced cards */
   }
 
   .highlighted {

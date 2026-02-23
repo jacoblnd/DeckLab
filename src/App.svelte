@@ -13,10 +13,25 @@
   import type { Isomorph } from './lib/cipher/isomorph';
 
   type DisplayToken = { char: string; highlight: 'A' | 'B' | null };
+  type CardTrace = { startCol: number; color: string };
 
   const PASSTHROUGH = new Set([' ', '\n', '.']);
 
+  const TRACE_WINDOW = 10;
+
+  const TRACE_COLORS = [
+    '#ffffff', // white
+    '#ff6b6b', // coral
+    '#ffd93d', // bright yellow
+    '#6bcb77', // bright green
+    '#4d96ff', // sky blue
+    '#ff922b', // orange
+    '#cc5de8', // violet
+    '#20c997', // teal
+  ];
+
   let mapping = $state(generateSlidingWindowMapping());
+  let cardTraces = $state<Map<string, CardTrace>>(new Map());
   let plaintext = $state('');
   let showHighlights = $state(true);
   let showIsomorphs = $state(false);
@@ -90,6 +105,25 @@
   function randomizeMapping() {
     const seed = Math.floor(Math.random() * 2 ** 32);
     mapping = generateCipherMapping(seed, { swapCount, rotationMax, rotationConstant });
+    cardTraces = new Map();
+  }
+
+  function toggleCardTrace(card: string, displayCol: number) {
+    const next = new Map(cardTraces);
+    if (next.has(card)) {
+      next.delete(card);
+    } else {
+      const usedColors = new Set([...next.values()].map(t => t.color));
+      const color =
+        TRACE_COLORS.find(c => !usedColors.has(c)) ??
+        TRACE_COLORS[next.size % TRACE_COLORS.length];
+      next.set(card, { startCol: displayCol, color });
+    }
+    cardTraces = next;
+  }
+
+  function clearAllTraces() {
+    cardTraces = new Map();
   }
 </script>
 
@@ -124,6 +158,9 @@
         <input type="checkbox" bind:checked={showAnimations} />
         Animate deck
       </label>
+      {#if cardTraces.size > 0}
+        <button onclick={clearAllTraces}>Clear traces</button>
+      {/if}
     </div>
     <PlaintextInput oninput={(text) => plaintext = text} />
     <PlaintextOutput tokens={displayTokens.ptTokens} />
@@ -139,7 +176,15 @@
     {/if}
   </main>
   <div class="right-panel">
-    <MultiDeckView steps={result.steps} {showHighlights} highlight={ciphertextHighlight} plaintextChars={filteredPlaintext} />
+    <MultiDeckView
+      steps={result.steps}
+      {showHighlights}
+      highlight={ciphertextHighlight}
+      plaintextChars={filteredPlaintext}
+      {cardTraces}
+      traceWindow={TRACE_WINDOW}
+      ontoggle={toggleCardTrace}
+    />
   </div>
 </div>
 
