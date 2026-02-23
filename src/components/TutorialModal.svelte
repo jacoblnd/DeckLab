@@ -328,7 +328,87 @@ PT = "H"  →  transformation for H:
 
         <div class="feature-divider"></div>
 
-        <!-- Row 6: Isomorphs -->
+        <!-- Row 6: Card Path Tracing -->
+        <div class="feature-row">
+          <div class="feature-desc">
+            <h3 class="feature-heading">Card Path Tracing</h3>
+            <p>
+              Click any mini-card in the historical deck view to trace that
+              card's movement across deck states. A colored polyline connects
+              the card's position through the next <strong>10 columns</strong>,
+              showing exactly how it travels as the cipher evolves.
+            </p>
+            <p>
+              Multiple cards can be traced simultaneously — each gets a
+              distinct color. The same card letter can have more than one
+              active trace: clicking an un-highlighted "O" at a later column
+              adds a new "O" trace from that position rather than replacing
+              the existing one.
+            </p>
+            <p>
+              Click a <strong>highlighted</strong> card (one within an active
+              trace window) to remove that specific trace. A
+              <strong>Clear traces</strong> button appears in the controls
+              whenever any trace is active. Randomizing the cipher clears
+              all traces.
+            </p>
+          </div>
+          <div class="feature-visual">
+            <svg viewBox="0 0 148 92" class="trace-diagram" xmlns="http://www.w3.org/2000/svg">
+              <!-- column headers -->
+              <text x="20"  y="14" text-anchor="middle" font-family="monospace" font-size="9" fill="#abb2bf">—</text>
+              <text x="55"  y="14" text-anchor="middle" font-family="monospace" font-size="9" fill="#abb2bf">1</text>
+              <text x="90"  y="14" text-anchor="middle" font-family="monospace" font-size="9" fill="#abb2bf">2</text>
+              <text x="125" y="14" text-anchor="middle" font-family="monospace" font-size="9" fill="#abb2bf">3</text>
+              <!-- trace polylines (drawn behind cards) -->
+              <polyline points="20,70 55,30 90,70 125,50" fill="none" stroke="#ff6b6b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+              <polyline points="20,30 55,50 90,30 125,70" fill="none" stroke="#20c997" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+              <!-- col 0: E(teal,pos0)  P(plain,pos1)  O(coral,pos2) -->
+              <rect x="10"  y="22" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#20c997" stroke-width="1.5"/>
+              <text x="20"  y="34" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#20c997">E</text>
+              <rect x="10"  y="42" width="20" height="16" rx="2" fill="#3a3f4a"/>
+              <text x="20"  y="54" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#cdd3de">P</text>
+              <rect x="10"  y="62" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#ff6b6b" stroke-width="1.5"/>
+              <text x="20"  y="74" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#ff6b6b">O</text>
+              <!-- col 1: O(coral,pos0)  E(teal,pos1)  X(plain,pos2) -->
+              <rect x="45"  y="22" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#ff6b6b" stroke-width="1.5"/>
+              <text x="55"  y="34" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#ff6b6b">O</text>
+              <rect x="45"  y="42" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#20c997" stroke-width="1.5"/>
+              <text x="55"  y="54" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#20c997">E</text>
+              <rect x="45"  y="62" width="20" height="16" rx="2" fill="#3a3f4a"/>
+              <text x="55"  y="74" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#cdd3de">X</text>
+              <!-- col 2: E(teal,pos0)  Q(plain,pos1)  O(coral,pos2) -->
+              <rect x="80"  y="22" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#20c997" stroke-width="1.5"/>
+              <text x="90"  y="34" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#20c997">E</text>
+              <rect x="80"  y="42" width="20" height="16" rx="2" fill="#3a3f4a"/>
+              <text x="90"  y="54" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#cdd3de">Q</text>
+              <rect x="80"  y="62" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#ff6b6b" stroke-width="1.5"/>
+              <text x="90"  y="74" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#ff6b6b">O</text>
+              <!-- col 3: Y(plain,pos0)  O(coral,pos1)  E(teal,pos2) -->
+              <rect x="115" y="22" width="20" height="16" rx="2" fill="#3a3f4a"/>
+              <text x="125" y="34" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#cdd3de">Y</text>
+              <rect x="115" y="42" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#ff6b6b" stroke-width="1.5"/>
+              <text x="125" y="54" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#ff6b6b">O</text>
+              <rect x="115" y="62" width="20" height="16" rx="2" fill="#3a3f4a" stroke="#20c997" stroke-width="1.5"/>
+              <text x="125" y="74" text-anchor="middle" font-family="monospace" font-size="8" font-weight="600" fill="#20c997">E</text>
+              <!-- "…" row indicating more cards below -->
+              <text x="20"  y="88" text-anchor="middle" font-size="9" fill="#555">…</text>
+              <text x="55"  y="88" text-anchor="middle" font-size="9" fill="#555">…</text>
+              <text x="90"  y="88" text-anchor="middle" font-size="9" fill="#555">…</text>
+              <text x="125" y="88" text-anchor="middle" font-size="9" fill="#555">…</text>
+            </svg>
+            <p class="visual-caption">
+              Coral trace = card "O" &nbsp;·&nbsp; Teal trace = card "E"
+            </p>
+            <div class="mock-controls" style="margin-top: 0.5rem;">
+              <span class="mock-btn">Clear traces</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-divider"></div>
+
+        <!-- Row 7: Isomorphs -->
         <div class="feature-row">
           <div class="feature-desc">
             <h3 class="feature-heading">Isomorphs</h3>
@@ -403,7 +483,7 @@ PT = "H"  →  transformation for H:
 
         <div class="feature-divider"></div>
 
-        <!-- Row 7: Cipher Inspector -->
+        <!-- Row 8: Cipher Inspector -->
         <div class="feature-row">
           <div class="feature-desc">
             <h3 class="feature-heading">Cipher Inspector</h3>
@@ -887,6 +967,14 @@ PT = "H"  →  transformation for H:
     font-weight: 700;
     color: #1e1e1e;
     white-space: nowrap;
+  }
+
+  /* trace diagram */
+  .trace-diagram {
+    display: block;
+    width: 100%;
+    max-width: 180px;
+    margin-bottom: 0.25rem;
   }
 
   /* ── Responsive ──────────────────────────── */
