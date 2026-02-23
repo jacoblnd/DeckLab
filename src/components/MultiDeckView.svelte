@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { CipherStep, Transformation } from '../lib/cipher/deck';
   import { createInitialDeck } from '../lib/cipher/deck';
-  import ConnectorStrip from './ConnectorStrip.svelte';
 
   const SWAP_COLORS = [
     '#e06c75', // swap 1  — red
@@ -19,18 +18,13 @@
     '#a0c8f0', // swap 13 — light blue
   ];
 
-  type CardTrace = { startCol: number; color: string };
-
   const initialDeck = createInitialDeck();
 
-  let { steps, showHighlights, highlight = null, plaintextChars, cardTraces, traceWindow, ontoggle }: {
+  let { steps, showHighlights, highlight = null, plaintextChars }: {
     steps: CipherStep[];
     showHighlights: boolean;
     highlight: { startA: number; startB: number; length: number } | null;
     plaintextChars: string;
-    cardTraces: Map<string, CardTrace>;
-    traceWindow: number;
-    ontoggle: (card: string, displayCol: number) => void;
   } = $props();
 
   function buildSwapPairMap(transformation: Transformation): (number | null)[] {
@@ -42,54 +36,20 @@
     }
     return map;
   }
-
-  // Returns the trace color if this card is being traced in this display column,
-  // or null if not. displayCol: 0 = initial "—" column, i+1 = step i.
-  function traceColorForCard(card: string, displayCol: number): string | null {
-    const trace = cardTraces.get(card);
-    if (!trace) return null;
-    if (displayCol >= trace.startCol && displayCol < trace.startCol + traceWindow) {
-      return trace.color;
-    }
-    return null;
-  }
-
-  // Returns the set of traces active through the connector between displayCol j
-  // and displayCol j+1. Both columns must be within the trace window.
-  function tracesForConnector(displayColLeft: number): { card: string; color: string }[] {
-    const result: { card: string; color: string }[] = [];
-    for (const [card, trace] of cardTraces) {
-      const inWindow =
-        displayColLeft >= trace.startCol &&
-        displayColLeft < trace.startCol + traceWindow - 1;
-      if (inWindow) result.push({ card, color: trace.color });
-    }
-    return result;
-  }
-
-  let hasTraces = $derived(cardTraces.size > 0);
 </script>
 
 {#snippet column(step: CipherStep, globalIdx: number)}
   {@const swapPairMap = buildSwapPairMap(step.transformation)}
-  {@const displayCol = globalIdx + 1}
   <div class="column">
     <div class="pt-label">{plaintextChars[globalIdx]}</div>
     <div class="col-label">{step.ciphertextChar}</div>
     <div class="col-rotation">{step.transformation.rotation > 0 ? `↺${step.transformation.rotation}` : ''}</div>
     {#each step.deck as letter, i}
       {@const pair = showHighlights ? swapPairMap[i] : null}
-      {@const traceColor = traceColorForCard(letter, displayCol)}
       <div
         class="mini-card"
         class:highlighted={pair != null}
         style:background-color={pair != null ? SWAP_COLORS[pair] : undefined}
-        style:outline={traceColor ? `2px solid ${traceColor}` : undefined}
-        style:z-index={traceColor ? 1 : undefined}
-        role="button"
-        tabindex="0"
-        onclick={() => ontoggle(letter, displayCol)}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') ontoggle(letter, displayCol); }}
       >
         {letter}
       </div>
@@ -97,41 +57,18 @@
   </div>
 {/snippet}
 
-<div
-  class="multi-deck"
-  data-testid="multi-deck"
-  style:gap={hasTraces ? '0' : '0.4rem'}
->
-  <!-- Initial "—" column (displayCol = 0) -->
+<div class="multi-deck" data-testid="multi-deck">
   <div class="column">
     <div class="pt-label"></div>
     <div class="col-label">—</div>
     <div class="col-rotation"></div>
     {#each initialDeck as letter}
-      {@const traceColor = traceColorForCard(letter, 0)}
-      <div
-        class="mini-card"
-        style:outline={traceColor ? `2px solid ${traceColor}` : undefined}
-        style:z-index={traceColor ? 1 : undefined}
-        role="button"
-        tabindex="0"
-        onclick={() => ontoggle(letter, 0)}
-        onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') ontoggle(letter, 0); }}
-      >
-        {letter}
-      </div>
+      <div class="mini-card">{letter}</div>
     {/each}
   </div>
 
   {#if !highlight}
     {#each steps as step, i}
-      {#if hasTraces}
-        <ConnectorStrip
-          leftDeck={i === 0 ? initialDeck : steps[i - 1].deck}
-          rightDeck={step.deck}
-          traces={tracesForConnector(i)}
-        />
-      {/if}
       {@render column(step, i)}
     {/each}
   {:else}
@@ -193,7 +130,6 @@
     font-family: monospace;
     font-weight: 700;
     font-size: 0.85rem;
-    line-height: 1;
     margin-bottom: 0.2rem;
     color: #abb2bf;
   }
@@ -219,8 +155,6 @@
     font-weight: 600;
     font-family: monospace;
     user-select: none;
-    cursor: pointer;
-    position: relative;
   }
 
   .highlighted {
