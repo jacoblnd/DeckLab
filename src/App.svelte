@@ -106,6 +106,7 @@
     const seed = Math.floor(Math.random() * 2 ** 32);
     mapping = generateCipherMapping(seed, { swapCount, rotationMax, rotationConstant });
     cardTraces = [];
+    selectedIsomorph = null;
   }
 
   function toggleCardTrace(card: string, displayCol: number) {
