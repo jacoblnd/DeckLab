@@ -18,14 +18,13 @@ function wrapPos(v: number): number {
 }
 
 /**
- * Pick `count` unique integers from [1, max) using the given RNG.
- * (Excludes 0 — for use when position 0 must be added separately.)
+ * Pick `count` unique integers from [0, max) using the given RNG.
  */
-function sampleUniqueNonZero(rng: () => number, max: number, count: number): number[] {
+function sampleUnique(rng: () => number, max: number, count: number): number[] {
   const result: number[] = [];
   const used = new Set<number>();
   while (result.length < count) {
-    const v = 1 + Math.floor(rng() * (max - 1));
+    const v = Math.floor(rng() * max);
     if (!used.has(v)) {
       used.add(v);
       result.push(v);
@@ -35,14 +34,14 @@ function sampleUniqueNonZero(rng: () => number, max: number, count: number): num
 }
 
 /**
- * Pick `count` unique integers from [0, max) using the given RNG.
- * (Includes 0 — for use when rotation handles the top-card-change rule.)
+ * Pick `count` unique integers from [1, max) using the given RNG.
+ * (Excludes 0 — for use when position 0 must be added separately.)
  */
-function sampleUnique(rng: () => number, max: number, count: number): number[] {
+function sampleUniqueNonZero(rng: () => number, max: number, count: number): number[] {
   const result: number[] = [];
   const used = new Set<number>();
   while (result.length < count) {
-    const v = Math.floor(rng() * max);
+    const v = 1 + Math.floor(rng() * (max - 1));
     if (!used.has(v)) {
       used.add(v);
       result.push(v);
@@ -95,8 +94,10 @@ export function generateSlidingWindowMapping(): CipherMapping {
  * If rotation === 0: position 0 must be in one swap (top card must change
  * via swaps). Samples swapCount*2 - 1 unique non-zero positions and prepends 0.
  *
- * If rotation > 0: rotation already guarantees the top card changes, so
- * all 2*swapCount positions are sampled freely from the full deck range.
+ * If rotation > 0: positions are sampled freely from [0, 26). Rotation moves
+ * deck[r] to position 0, guaranteeing the top card changes — unless a swap
+ * [0, 26-r] is present, which would return deck[0] to the top for any deck
+ * state. If that bad pairing is sampled, positions are resampled.
  */
 function generateTransformation(rng: () => number, swapCount: number, rotation: number): Transformation {
   let positions: number[];
@@ -104,7 +105,12 @@ function generateTransformation(rng: () => number, swapCount: number, rotation: 
     const others = sampleUniqueNonZero(rng, DECK_SIZE, swapCount * 2 - 1);
     positions = [0, ...others];
   } else {
-    positions = sampleUnique(rng, DECK_SIZE, swapCount * 2);
+    const badPartner = (DECK_SIZE - rotation) % DECK_SIZE;
+    do {
+      positions = sampleUnique(rng, DECK_SIZE, swapCount * 2);
+      const zeroIdx = positions.indexOf(0);
+      if (zeroIdx === -1 || positions[zeroIdx ^ 1] !== badPartner) break;
+    } while (true);
   }
 
   const swaps: Swap[] = [];
